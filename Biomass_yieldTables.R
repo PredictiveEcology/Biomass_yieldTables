@@ -18,7 +18,7 @@ defineModule(sim, list(
   documentation = deparse(list("README.md", "Biomass_yieldTables.Rmd")), ## same file
   reqdPkgs = list("data.table"),
   parameters = rbind(
-    defineParameter(".useCache", "character", c("generateData", "Biomass_yieldTables"), NA, NA,
+    defineParameter(".useCache", "character", c("generateData", "biomass_yieldTables"), NA, NA,
                     "Should caching of events or module be used?"),
     defineParameter("moduleNameAndBranch", "character", "Biomass_core@EliotTweaks (>= 1.3.6)", NA, NA,
                     "The branch and version number required for Biomass_core. This will be downloaded ",
