@@ -11,7 +11,7 @@ defineModule(sim, list(
   authors = structure(list(list(given = c("Eliot"), family = "McIntire", role = c("aut", "cre"),
                                 email = "eliot.mcintire@nrcan-rncan.gc.ca", comment = NULL)), class = "person"),
   childModules = character(0),
-  version = list(Biomass_yieldTables = "0.0.7"),
+  version = list(Biomass_yieldTables = "0.0.8"),
   timeframe = as.POSIXlt(c(NA, NA)),
   timeunit = "year",
   citation = list("citation.bib"),
@@ -126,7 +126,7 @@ doEvent.Biomass_yieldTables = function(sim, eventTime, eventType) {
       message("Loading in cohortData files")
       cohortDataAll <- ReadExperimentFiles(as.data.table(sim$simOutputs)[saved == TRUE])  # function already exists
       message("Converting to CBM Growth Increment ... This may take several minutes")
-      cdObjs <- Biomass_yieldTables(cohortDataAll, numSpeciesKeep = 3)
+      cdObjs <- generateYieldTables(cohortDataAll, numSpeciesKeep = 3)
       sim$CBM_AGB <- cdObjs$cdWide
       sim$CBM_speciesCodes <- cdObjs$cdSpeciesCodes
       rm(cdObjs, cohortDataAll)
@@ -141,7 +141,7 @@ doEvent.Biomass_yieldTables = function(sim, eventTime, eventType) {
 
 
 # setkey(cds, pixelGroup, age)
-Biomass_yieldTables <- function(cohortData, numSpeciesKeep = 3) {
+generateYieldTables <- function(cohortData, numSpeciesKeep = 3) {
   cds <- cohortData
   setkeyv(cds, c("speciesCode", "pixelGroup"))
 
