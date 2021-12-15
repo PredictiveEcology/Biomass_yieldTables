@@ -55,8 +55,8 @@ doEvent.Biomass_yieldTables = function(sim, eventTime, eventType) {
   switch(
     eventType,
     init = {
+      mod$paths <- paths(sim)
       if (!is.null(Par$moduleNameAndBranch)) {
-        mod$paths <- paths(sim)
         mod$paths$modulePath <- file.path(dataPath(sim), "module")
       }
       sim <- scheduleEvent(sim, time(sim), "Biomass_yieldTables", "generateData",
@@ -87,7 +87,8 @@ doEvent.Biomass_yieldTables = function(sim, eventTime, eventType) {
                                     fun = "qs::qsave",
                                     # fun = "assign", # arguments = list(value = ll),
                                     stringsAsFactors = FALSE)
-      io <- inputObjects(module = "Biomass_core", path = modulePath(sim))
+      modulePath <- paste0(mod$paths$modulePath)
+      io <- inputObjects(module = "Biomass_core", path = modulePath)
       objectNames <- io$Biomass_core$objectName
       objectNames <- objectNames[sapply(objectNames, exists, envir = envir(sim))]
       objects <- mget(objectNames, envir(sim))
@@ -113,6 +114,7 @@ doEvent.Biomass_yieldTables = function(sim, eventTime, eventType) {
         )
       )
       sim$simOutputs <- Cache(simInitAndSpadesClearEnv,
+                              paths = mod$paths,
                               times = timesForYield,
                               params = parameters,
                               modules = "Biomass_core",
