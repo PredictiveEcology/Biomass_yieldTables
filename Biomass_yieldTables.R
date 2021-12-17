@@ -20,7 +20,7 @@ defineModule(sim, list(
   parameters = rbind(
     defineParameter(".useCache", "character", c("generateData", "biomass_yieldTables"), NA, NA,
                     "Should caching of events or module be used?"),
-    defineParameter("moduleNameAndBranch", "character", "Biomass_core@EliotTweaks (>= 1.3.9)", NA, NA,
+    defineParameter("moduleNameAndBranch", "character", "Biomass_core@development (>= 1.3.9)", NA, NA,
                     "The branch and version number required for Biomass_core. This will be downloaded ",
                     "into the file.path(dataPath(sim), 'module') of this module, so it does not ",
                     "interact with the main user's modules. If this is set to NULL, then ",
