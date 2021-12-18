@@ -16,11 +16,13 @@ defineModule(sim, list(
   timeunit = "year",
   citation = list("citation.bib"),
   documentation = deparse(list("README.md", "Biomass_yieldTables.Rmd")), ## same file
-  reqdPkgs = list("data.table"),
+  reqdPkgs = list("data.table", "PredictiveEcology/SpaDES.core@Plots (>= 1.0.9.9008)"),
   parameters = rbind(
-    defineParameter(".useCache", "character", c("generateData", "biomass_yieldTables"), NA, NA,
+    defineParameter(".useCache", "character", c("generateData", "generateYieldTables"), NA, NA,
                     "Should caching of events or module be used?"),
-    defineParameter("moduleNameAndBranch", "character", "Biomass_core@development (>= 1.3.9)", NA, NA,
+    defineParameter(".plots", "character", "screen", NA, NA,
+                    "Used by Plots function, which can be optionally used here"),
+    defineParameter("moduleNameAndBranch", "character", "Biomass_core@EliotTweaks (>= 1.3.6)", NA, NA,
                     "The branch and version number required for Biomass_core. This will be downloaded ",
                     "into the file.path(dataPath(sim), 'module') of this module, so it does not ",
                     "interact with the main user's modules. If this is set to NULL, then ",
@@ -61,78 +63,36 @@ doEvent.Biomass_yieldTables = function(sim, eventTime, eventType) {
       }
       sim <- scheduleEvent(sim, time(sim), "Biomass_yieldTables", "generateData",
                            eventPriority = -1)
-      sim <- scheduleEvent(sim, time(sim), "Biomass_yieldTables", "biomass_yieldTables",
+      sim <- scheduleEvent(sim, time(sim), "Biomass_yieldTables", "generateYieldTables",
                            eventPriority = -1)
+      sim <- scheduleEvent(sim, time(sim), "Biomass_yieldTables", "plotYieldTables",
+                           eventPriority = -1)
+
     },
     generateData = {
-      # Get modules if using stand alone module
-      if (!is.null(Par$moduleNameAndBranch)) {
-        getModule(Par$moduleNameAndBranch, modulePath = mod$paths$modulePath, overwrite = TRUE) # will only overwrite if wrong version
-      }
-      cohortDataForYield <- Copy(sim$cohortData)
-      cohortDataForYield$B <- 1L
-      cohortDataForYield$age <- 0L
-      timesForYield <- list(start = 0, end = max(sim$species$longevity))
-
-      # pick out the elements of the simList that are relevant for Caching -- not everything is
-      modPath <- file.path(mod$paths$modulePath, "Biomass_core")
-      filesToDigest <- c(dir(file.path(modPath, "R"), full.names = TRUE), file.path(modPath, "Biomass_core.R"))
-      dig1 <- lapply(filesToDigest, function(fn) digest::digest(file = fn))
-
-      dig <- CacheDigest(list(sim$species, cohortDataForYield, timesForYield, dig1))
-
-      sim$simOutputs <- expand.grid(objectName = "cohortData",
-                                    saveTime = unique(seq(timesForYield$start, timesForYield$end, by = 1)),
-                                    eventPriority = 1,
-                                    fun = "qs::qsave",
-                                    # fun = "assign", # arguments = list(value = ll),
-                                    stringsAsFactors = FALSE)
-      modulePath <- paste0(mod$paths$modulePath)
-      io <- inputObjects(module = "Biomass_core", path = modulePath)
-      objectNames <- io$Biomass_core$objectName
-      objectNames <- objectNames[sapply(objectNames, exists, envir = envir(sim))]
-      objects <- mget(objectNames, envir(sim))
-      objects$cohortData <- cohortDataForYield
-      opts <- options("LandR.assertions" = FALSE)
-      on.exit(options(opts))
-      paramCheckOtherMods(".studyAreaName", sim = sim)
-      parameters <- list(
-        .globals = list(
-          "sppEquivCol" = speciesNameConvention
-        ),
-        Biomass_core = list(
-          ".plotInitialTime" = timesForYield$start
-          , ".plots" = NULL#c("screen", "png")
-          , ".saveInitialTime" = NULL#times$start
-          , ".useCache" = c(".inputObjects", "init")
-          , ".useParallel" = 1
-          , ".maxMemory" = 30
-          , "vegLeadingProportion" = 0
-          , "calcSummaryBGM" = NULL
-          , "seedingAlgorithm" = "noSeeding"
-          , ".studyAreaName" = Par$.studyAreaName
-        )
-      )
-      sim$simOutputs <- Cache(simInitAndSpadesClearEnv,
-                              paths = mod$paths,
-                              times = timesForYield,
-                              params = parameters,
-                              modules = "Biomass_core",
-                              outputs = sim$simOutputs,
-                              objects = objects,
-                              debug = 1, omitArgs = c("objects", "times", "debug"), .cacheExtra = dig
-      )
-
+      biomassCoresOuts <- runBiomass_core(Par$moduleNameAndBranch, mod$paths, sim$cohortData, sim$species,
+                                          simEnv = envir(sim))
+      sim$simOutputs <- biomassCoresOuts$simOutputs
+      mod$digest <- biomassCoresOuts$digest
     },
-    biomass_yieldTables = {
+    generateYieldTables = {
       message("Loading in cohortData files")
-      cohortDataAll <- ReadExperimentFiles(as.data.table(sim$simOutputs)[saved == TRUE])  # function already exists
+      cohortDataAll <- Cache(ReadExperimentFiles, omitArgs = "factorialOutputs",
+                             .cacheExtra = mod$digest$outputHash, as.data.table(sim$simOutputs)[saved == TRUE])  # function already exists
       message("Converting to CBM Growth Increment ... This may take several minutes")
-      cdObjs <- generateYieldTables(cohortDataAll, numSpeciesKeep = 3)
+      cdObjs <- Cache(generateYieldTables, .cacheExtra = mod$digest$outputHash, cohortDataAll, numSpeciesKeep = 3,
+                      omitArgs = c("cohortData"))
       sim$CBM_AGB <- cdObjs$cdWide
       sim$CBM_speciesCodes <- cdObjs$cdSpeciesCodes
       rm(cdObjs, cohortDataAll)
       gc()
+    },
+    plotYieldTables = {
+      numPlots <- 40
+      Plots(AGB = sim$CBM_AGB, sp = sim$CBM_speciesCodes, usePlot = FALSE, fn = pltfn,
+            numPlots = numPlots,
+            ggsaveArgs = list(width = 10, height = 7),
+            filename = paste("Yield Curves from", numPlots, "random plots -", gsub(":", "_", sim$._startClockTime)))
     },
     warning(paste("Undefined event type: \'", current(sim)[1, "eventType", with = FALSE],
                   "\' in module \'", current(sim)[1, "moduleName", with = FALSE], "\'", sep = ""))
@@ -188,7 +148,64 @@ generateYieldTables <- function(cohortData, numSpeciesKeep = 3) {
   list(cdWide = cdWide, cdSpeciesCodes = cdSpeciesCodes)
 }
 
+runBiomass_core <- function(moduleNameAndBranch, paths, cohortData, species, simEnv) {
+  # Get modules if using stand alone module
+  if (!is.null(moduleNameAndBranch)) {
+    getModule(moduleNameAndBranch, modulePath = paths$modulePath, overwrite = TRUE) # will only overwrite if wrong version
+  }
+  cohortDataForYield <- Copy(cohortData)
+  cohortDataForYield$B <- 1L
+  cohortDataForYield$age <- 0L
+  timesForYield <- list(start = 0, end = max(species$longevity))
 
+  # pick out the elements of the simList that are relevant for Caching -- not everything is
+  modPath <- file.path(paths$modulePath, "Biomass_core")
+  filesToDigest <- c(dir(file.path(modPath, "R"), full.names = TRUE), file.path(modPath, "Biomass_core.R"))
+  dig1 <- lapply(filesToDigest, function(fn) digest::digest(file = fn))
+
+  dig <- CacheDigest(list(species, cohortDataForYield, timesForYield, dig1))
+
+  simOutputs <- expand.grid(objectName = "cohortData",
+                            saveTime = unique(seq(timesForYield$start, timesForYield$end, by = 1)),
+                            eventPriority = 1,
+                            fun = "qs::qsave",
+                            # fun = "assign", # arguments = list(value = ll),
+                            stringsAsFactors = FALSE)
+  modulePath <- paste0(paths$modulePath)
+  io <- inputObjects(module = "Biomass_core", path = modulePath)
+  objectNames <- io$Biomass_core$objectName
+  objectNames <- objectNames[sapply(objectNames, exists, envir = simEnv)]
+  objects <- mget(objectNames, envir = simEnv)
+  objects$cohortData <- cohortDataForYield
+  opts <- options("LandR.assertions" = FALSE)
+  on.exit(options(opts))
+  parameters <- list(
+    .globals = list(
+      "sppEquivCol" = speciesNameConvention
+    ),
+    Biomass_core = list(
+      ".plotInitialTime" = timesForYield$start
+      , ".plots" = NULL#c("screen", "png")
+      , ".saveInitialTime" = NULL#times$start
+      , ".useCache" = c(".inputObjects", "init")
+      , ".useParallel" = 1
+      , ".maxMemory" = 30
+      , "vegLeadingProportion" = 0
+      , "calcSummaryBGM" = NULL
+      , "seedingAlgorithm" = "noSeeding"
+    )
+  )
+  simOutputs <- Cache(simInitAndSpadesClearEnv,
+                      paths = paths,
+                      times = timesForYield,
+                      params = parameters,
+                      modules = "Biomass_core",
+                      outputs = simOutputs,
+                      objects = objects,
+                      debug = 1, omitArgs = c("objects", "times", "debug"), .cacheExtra = dig
+  )
+  list(simOutputs = simOutputs, digest = dig)
+}
 
 ### add additional events as needed by copy/pasting from above
 ReadExperimentFiles <- function(factorialOutputs) {
@@ -214,4 +231,15 @@ simInitAndSpadesClearEnv <- function(...) {
   simOut <- simInitAndSpades(...)
   rm(list = ls(simOut, all.names = TRUE), envir = envir(simOut))
   outputs(simOut)
+}
+
+pltfn <- function(AGB, sp, numPlots) {
+  pullOutId <- sample(1:max(AGB$id), size = numPlots)
+  id2 <- AGB[id %in% pullOutId]
+  id2melt <- melt(id2, variable.name = "Sp", measure = patterns("Sp"), value.name = "AGB")
+  sp <- sp[pixelGroup %in% pullOutId]
+  id2melt <- id2melt[sp, on = c("Sp", "id" = "pixelGroup")]
+  gg <- ggplot(id2melt, aes(age, AGB, color = speciesCode)) + geom_line() + theme_bw() +
+    facet_wrap(~id)
+  return(invisible(gg))
 }
