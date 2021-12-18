@@ -16,12 +16,15 @@ defineModule(sim, list(
   timeunit = "year",
   citation = list("citation.bib"),
   documentation = deparse(list("README.md", "Biomass_yieldTables.Rmd")), ## same file
-  reqdPkgs = list("data.table", "PredictiveEcology/SpaDES.core@Plots (>= 1.0.9.9008)"),
+  reqdPkgs = list("data.table", "PredictiveEcology/SpaDES.core@development (>= 1.0.9.9008)"),
   parameters = rbind(
     defineParameter(".useCache", "character", c("generateData", "generateYieldTables"), NA, NA,
                     "Should caching of events or module be used?"),
     defineParameter(".plots", "character", "screen", NA, NA,
                     "Used by Plots function, which can be optionally used here"),
+    defineParameter("numPlots", "integer", 40, NA, NA,
+                    "When plotting the yield curves, this is how many unique pixel groups will ",
+                    "be randomly selected and plotted"),
     defineParameter("moduleNameAndBranch", "character", "Biomass_core@EliotTweaks (>= 1.3.6)", NA, NA,
                     "The branch and version number required for Biomass_core. This will be downloaded ",
                     "into the file.path(dataPath(sim), 'module') of this module, so it does not ",
@@ -76,6 +79,7 @@ doEvent.Biomass_yieldTables = function(sim, eventTime, eventType) {
       mod$digest <- biomassCoresOuts$digest
     },
     generateYieldTables = {
+
       message("Loading in cohortData files")
       cohortDataAll <- Cache(ReadExperimentFiles, omitArgs = "factorialOutputs",
                              .cacheExtra = mod$digest$outputHash, as.data.table(sim$simOutputs)[saved == TRUE])  # function already exists
@@ -88,11 +92,11 @@ doEvent.Biomass_yieldTables = function(sim, eventTime, eventType) {
       gc()
     },
     plotYieldTables = {
-      numPlots <- 40
       Plots(AGB = sim$CBM_AGB, sp = sim$CBM_speciesCodes, usePlot = FALSE, fn = pltfn,
-            numPlots = numPlots,
+            numPlots = Par$numPlots,
             ggsaveArgs = list(width = 10, height = 7),
-            filename = paste("Yield Curves from", numPlots, "random plots -", gsub(":", "_", sim$._startClockTime)))
+            filename = paste("Yield Curves from", Par$numPlots,
+                             "random plots -", gsub(":", "_", sim$._startClockTime)))
     },
     warning(paste("Undefined event type: \'", current(sim)[1, "eventType", with = FALSE],
                   "\' in module \'", current(sim)[1, "moduleName", with = FALSE], "\'", sep = ""))
