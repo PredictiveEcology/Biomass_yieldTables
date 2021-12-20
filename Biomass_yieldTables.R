@@ -117,6 +117,8 @@ generateYieldTables <- function(cohortData, numSpeciesKeep = 3) {
   # Fix the age = 0 problem
   cds[, maxB := max(B), by = c("pixelGroup", "speciesCode")]
   set(cds, NULL, "maxB", as.integer(cds$maxB))
+
+  # Sort them by maxB, in reverse order -- so first one in the list is largest maxB
   setorderv(cds, c("maxB"), order = -1L)
   suppressWarnings(set(cds, NULL, "Sp", NULL))
   # The next line is an efficient shortcut to getting a unique Sp1 per speciesCode within pixelGroup
