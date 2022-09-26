@@ -227,6 +227,7 @@ ReadExperimentFiles <- function(factorialOutputs) {
     cat(crayon::green(" Done!\n"))
     return(cd)
   })
+  gc() # need to clear memory
   message("rbindlisting the cohortData objects")
   cds <- rbindlist(cdsList, use.names = TRUE, fill = TRUE)
 
