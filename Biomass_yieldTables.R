@@ -160,6 +160,7 @@ runBiomass_core <- function(moduleNameAndBranch, paths, cohortData, species, sim
   if (!is.null(moduleNameAndBranch)) {
     getModule(moduleNameAndBranch, modulePath = paths$modulePath, overwrite = TRUE) # will only overwrite if wrong version
   }
+  speciesNameConvention <- LandR::equivalentNameColumn(species$species, LandR::sppEquivalencies_CA)
   cohortDataForYield <- Copy(cohortData)
   cohortDataForYield$B <- 1L
   cohortDataForYield$age <- 0L
@@ -188,8 +189,7 @@ runBiomass_core <- function(moduleNameAndBranch, paths, cohortData, species, sim
   on.exit(options(opts))
   parameters <- list(
     .globals = list(
-      "sppEquivCol" = speciesNameConvention
-    ),
+      "sppEquivCol" = speciesNameConvention),
     Biomass_core = list(
       ".plotInitialTime" = timesForYield$start
       , ".plots" = NULL#c("screen", "png")
