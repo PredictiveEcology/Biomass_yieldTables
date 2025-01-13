@@ -112,8 +112,9 @@ generateYieldTables <- function(cohortData, numSpeciesKeep = 3) {
   setkeyv(cds, c("speciesCode", "pixelGroup"))
 
   # Because LandR biomass will lump all age < 11 into age 0
-  if (sum(cds$age[cds$pixelGroup == 1] == 0) == 11)
+  if ((sum(cds$age[cds$pixelGroup == 1] == 0) %% 11) == 0) {
     cds[age == 0, age := 0:10, by = c("pixelGroup", "speciesCode")]
+  }
   # Fix the age = 0 problem
   cds[, maxB := max(B), by = c("pixelGroup", "speciesCode")]
   set(cds, NULL, "maxB", as.integer(cds$maxB))
@@ -159,6 +160,7 @@ runBiomass_core <- function(moduleNameAndBranch, paths, cohortData, species, sim
   if (!is.null(moduleNameAndBranch)) {
     getModule(moduleNameAndBranch, modulePath = paths$modulePath, overwrite = TRUE) # will only overwrite if wrong version
   }
+  speciesNameConvention <- LandR::equivalentNameColumn(species$species, LandR::sppEquivalencies_CA)
   cohortDataForYield <- Copy(cohortData)
   cohortDataForYield$B <- 1L
   cohortDataForYield$age <- 0L
@@ -187,8 +189,7 @@ runBiomass_core <- function(moduleNameAndBranch, paths, cohortData, species, sim
   on.exit(options(opts))
   parameters <- list(
     .globals = list(
-      "sppEquivCol" = speciesNameConvention
-    ),
+      "sppEquivCol" = speciesNameConvention),
     Biomass_core = list(
       ".plotInitialTime" = timesForYield$start
       , ".plots" = NULL#c("screen", "png")
