@@ -83,7 +83,7 @@ doEvent.Biomass_yieldTables = function(sim, eventTime, eventType) {
       cohortDataAll <- Cache(ReadExperimentFiles, omitArgs = "factorialOutputs",
                              .cacheExtra = mod$digest$outputHash, as.data.table(sim$simOutputs)[saved == TRUE])  # function already exists
       message("Converting to CBM Growth Increment ... This may take several minutes")
-      cdObjs <- Cache(generateYieldTables, .cacheExtra = mod$digest$outputHash, cohortDataAll, numSpeciesKeep = 3,
+      cdObjs <- Cache(generateYieldTables, .cacheExtra = mod$digest$outputHash, cohortDataAll,
                       omitArgs = c("cohortData"))
       sim$CBM_AGB <- cdObjs$cdWide
       sim$CBM_speciesCodes <- cdObjs$cdSpeciesCodes
@@ -106,7 +106,7 @@ doEvent.Biomass_yieldTables = function(sim, eventTime, eventType) {
 
 
 # setkey(cds, pixelGroup, age)
-generateYieldTables <- function(cohortData, numSpeciesKeep = 3) {
+generateYieldTables <- function(cohortData) {
   cds <- cohortData
   setkeyv(cds, c("speciesCode", "pixelGroup"))
   # Because LandR biomass will lump all age < 11 into age 0
@@ -122,48 +122,6 @@ generateYieldTables <- function(cohortData, numSpeciesKeep = 3) {
 
   # Remove columns
   cds[, speciesCode := NULL]
-
-  # # Fix the age = 0 problem
-  # cds[, maxB := max(B), by = c("pixelGroup", "speciesCode")]
-  # set(cds, NULL, "maxB", as.integer(cds$maxB))
-
-  # # Sort them by maxB, in reverse order -- so first one in the list is largest maxB
-  # setorderv(cds, c("maxB"), order = -1L)
-  # suppressWarnings(set(cds, NULL, "Sp", NULL))
-  #
-  #
-  #
-  #
-  # The next line is an efficient shortcut to getting a unique Sp1 per speciesCode within pixelGroup
-  #  However, it can fail when two species have exactly the same maxB. So, subsequent line
-  #  checks for failures (manifest by having duplicate Sp1 codes with two age = 1, 2 etc.)
-  # cds[, Sp1 := as.integer(factor(-maxB)), by = c("pixelGroup")]
-  # dd <- duplicated(cds, by = c("pixelGroup", "age", "Sp1"))
-  # if (any(dd)) {
-  #   pgsWithDups <- unique(cds$pixelGroup[dd])
-  #   cdDups <- cds[pixelGroup %in% pgsWithDups]
-  #   corrections <- cdDups[, list(Sp1 = seq_along(unique(speciesCode)),
-  #                                speciesCode = unique(speciesCode)), by = "pixelGroup"]
-  #   set(cdDups, NULL, "Sp1", NULL)
-  #   corrections <- cdDups[corrections, on = c("pixelGroup", "speciesCode")]
-  #   cds <- rbindlist(list(cds[!(pixelGroup %in% pgsWithDups)], corrections))
-  # }
-  #
-  # cds[, Sp := paste0("Sp", Sp1)]
-  # cds <- cds[Sp %in% paste0("Sp", 1:numSpeciesKeep)] # keep only most abundant X species
-  # cdSpeciesCodes <- cds[, list(Sp = Sp[1]), by = c("speciesCode", "pixelGroup")]
-  # set(cds, NULL, c("Sp1", "maxB", "speciesCode"), NULL)
-  #
-  # # Convert to wide format
-  # cdWide <- dcast(cds, pixelGroup + age ~ Sp, value.var = "B")
-  # setnames(cdWide, old = "pixelGroup", new = "id")
-  #
-  # # Convert NAs to zeros
-  # for (column in colnames(cdWide)) {
-  #   if (anyNA(cdWide[[column]])) {
-  #     set(cdWide, which(is.na(cdWide[[column]])), column, 0L)
-  #   }
-  # }
   list(cdWide = cds, cdSpeciesCodes = cdSpeciesCodes)
 }
 
