@@ -79,7 +79,6 @@ doEvent.Biomass_yieldTables = function(sim, eventTime, eventType) {
       mod$digest <- biomassCoresOuts$digest
     },
     generateYieldTables = {
-
       message("Loading in cohortData files")
       cohortDataAll <- Cache(ReadExperimentFiles, omitArgs = "factorialOutputs",
                              .cacheExtra = mod$digest$outputHash, as.data.table(sim$simOutputs)[saved == TRUE])  # function already exists
@@ -110,49 +109,62 @@ doEvent.Biomass_yieldTables = function(sim, eventTime, eventType) {
 generateYieldTables <- function(cohortData, numSpeciesKeep = 3) {
   cds <- cohortData
   setkeyv(cds, c("speciesCode", "pixelGroup"))
-
   # Because LandR biomass will lump all age < 11 into age 0
   if ((sum(cds$age[cds$pixelGroup == 1] == 0) %% 11) == 0) {
     cds[age == 0, age := 0:10, by = c("pixelGroup", "speciesCode")]
   }
-  # Fix the age = 0 problem
-  cds[, maxB := max(B), by = c("pixelGroup", "speciesCode")]
-  set(cds, NULL, "maxB", as.integer(cds$maxB))
 
-  # Sort them by maxB, in reverse order -- so first one in the list is largest maxB
-  setorderv(cds, c("maxB"), order = -1L)
-  suppressWarnings(set(cds, NULL, "Sp", NULL))
+  # Add cohort_id. One cohort_id per pixelGroup x species
+  cds[, cohort_id:=.GRP, by = c("pixelGroup", "speciesCode")]
+
+  # Create reference table
+  cdSpeciesCodes <- unique(cds[, .(cohort_id, pixelGroup, speciesCode)])
+
+  # Remove columns
+  cds[, speciesCode := NULL]
+
+  # # Fix the age = 0 problem
+  # cds[, maxB := max(B), by = c("pixelGroup", "speciesCode")]
+  # set(cds, NULL, "maxB", as.integer(cds$maxB))
+
+  # # Sort them by maxB, in reverse order -- so first one in the list is largest maxB
+  # setorderv(cds, c("maxB"), order = -1L)
+  # suppressWarnings(set(cds, NULL, "Sp", NULL))
+  #
+  #
+  #
+  #
   # The next line is an efficient shortcut to getting a unique Sp1 per speciesCode within pixelGroup
   #  However, it can fail when two species have exactly the same maxB. So, subsequent line
   #  checks for failures (manifest by having duplicate Sp1 codes with two age = 1, 2 etc.)
-  cds[, Sp1 := as.integer(factor(-maxB)), by = c("pixelGroup")]
-  dd <- duplicated(cds, by = c("pixelGroup", "age", "Sp1"))
-  if (any(dd)) {
-    pgsWithDups <- unique(cds$pixelGroup[dd])
-    cdDups <- cds[pixelGroup %in% pgsWithDups]
-    corrections <- cdDups[, list(Sp1 = seq_along(unique(speciesCode)),
-                                 speciesCode = unique(speciesCode)), by = "pixelGroup"]
-    set(cdDups, NULL, "Sp1", NULL)
-    corrections <- cdDups[corrections, on = c("pixelGroup", "speciesCode")]
-    cds <- rbindlist(list(cds[!(pixelGroup %in% pgsWithDups)], corrections))
-  }
-
-  cds[, Sp := paste0("Sp", Sp1)]
-  cds <- cds[Sp %in% paste0("Sp", 1:numSpeciesKeep)] # keep only most abundant X species
-  cdSpeciesCodes <- cds[, list(Sp = Sp[1]), by = c("speciesCode", "pixelGroup")]
-  set(cds, NULL, c("Sp1", "maxB", "speciesCode"), NULL)
-
-  # Convert to wide format
-  cdWide <- dcast(cds, pixelGroup + age ~ Sp, value.var = "B")
-  setnames(cdWide, old = "pixelGroup", new = "id")
-
-  # Convert NAs to zeros
-  for (column in colnames(cdWide)) {
-    if (anyNA(cdWide[[column]])) {
-      set(cdWide, which(is.na(cdWide[[column]])), column, 0L)
-    }
-  }
-  list(cdWide = cdWide, cdSpeciesCodes = cdSpeciesCodes)
+  # cds[, Sp1 := as.integer(factor(-maxB)), by = c("pixelGroup")]
+  # dd <- duplicated(cds, by = c("pixelGroup", "age", "Sp1"))
+  # if (any(dd)) {
+  #   pgsWithDups <- unique(cds$pixelGroup[dd])
+  #   cdDups <- cds[pixelGroup %in% pgsWithDups]
+  #   corrections <- cdDups[, list(Sp1 = seq_along(unique(speciesCode)),
+  #                                speciesCode = unique(speciesCode)), by = "pixelGroup"]
+  #   set(cdDups, NULL, "Sp1", NULL)
+  #   corrections <- cdDups[corrections, on = c("pixelGroup", "speciesCode")]
+  #   cds <- rbindlist(list(cds[!(pixelGroup %in% pgsWithDups)], corrections))
+  # }
+  #
+  # cds[, Sp := paste0("Sp", Sp1)]
+  # cds <- cds[Sp %in% paste0("Sp", 1:numSpeciesKeep)] # keep only most abundant X species
+  # cdSpeciesCodes <- cds[, list(Sp = Sp[1]), by = c("speciesCode", "pixelGroup")]
+  # set(cds, NULL, c("Sp1", "maxB", "speciesCode"), NULL)
+  #
+  # # Convert to wide format
+  # cdWide <- dcast(cds, pixelGroup + age ~ Sp, value.var = "B")
+  # setnames(cdWide, old = "pixelGroup", new = "id")
+  #
+  # # Convert NAs to zeros
+  # for (column in colnames(cdWide)) {
+  #   if (anyNA(cdWide[[column]])) {
+  #     set(cdWide, which(is.na(cdWide[[column]])), column, 0L)
+  #   }
+  # }
+  list(cdWide = cds, cdSpeciesCodes = cdSpeciesCodes)
 }
 
 runBiomass_core <- function(moduleNameAndBranch, paths, cohortData, species, simEnv) {
@@ -242,12 +254,12 @@ simInitAndSpadesClearEnv <- function(...) {
 }
 
 pltfn <- function(AGB, sp, numPlots) {
-  pullOutId <- sample(1:max(AGB$id), size = numPlots)
-  id2 <- AGB[id %in% pullOutId]
-  id2melt <- melt(id2, variable.name = "Sp", measure = patterns("Sp"), value.name = "AGB")
+  pullOutId <- sample(1:max(AGB$pixelGroup), size = numPlots)
+  id2 <- AGB[pixelGroup %in% pullOutId]
+  setnames(id2, "B", "AGB")
   sp <- sp[pixelGroup %in% pullOutId]
-  id2melt <- id2melt[sp, on = c("Sp", "id" = "pixelGroup")]
-  gg <- ggplot(id2melt, aes(age, AGB, color = speciesCode)) + geom_line() + theme_bw() +
-    facet_wrap(~id)
+  id2 <- id2[sp, on = c("cohort_id", "pixelGroup" = "pixelGroup")]
+  gg <- ggplot(id2, aes(age, AGB, color = speciesCode)) + geom_line() + theme_bw() +
+    facet_wrap(~pixelGroup)
   return(invisible(gg))
 }
