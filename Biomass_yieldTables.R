@@ -34,6 +34,11 @@ defineModule(sim, list(
     defineParameter(".studyAreaName", "character", NA, NA, NA,
                     "Human-readable name for the study area used. If NA, a hash of studyArea will be used.")
   ),
+  ## DC, 22-01-2025
+  ## For now, there are no default for these inputs.
+  ## In theory, a user could provide any of the inputs of biomass_core.
+  ## In the future, `runBiomass_core` could be modified to be more explicit about
+  ## what it uses. The list of inputs should also be updated.
   inputObjects = bindrows(
     expectsInput("cohortData", "data.table",
                  desc = paste("`data.table` with cohort-level information on age and biomass, by `pixelGroup` and ecolocation",
@@ -142,56 +147,17 @@ generateYieldTables <- function(cohortData, numSpeciesKeep = 3) {
   # Remove columns
   cds[, speciesCode := NULL]
   
-  # # Fix the age = 0 problem
-  # cds[, maxB := max(B), by = c("pixelGroup", "speciesCode")]
-  # set(cds, NULL, "maxB", as.integer(cds$maxB))
-  
-  # # Sort them by maxB, in reverse order -- so first one in the list is largest maxB
-  # setorderv(cds, c("maxB"), order = -1L)
-  # suppressWarnings(set(cds, NULL, "Sp", NULL))
-  #
-  #
-  #
-  #
-  # The next line is an efficient shortcut to getting a unique Sp1 per speciesCode within pixelGroup
-  #  However, it can fail when two species have exactly the same maxB. So, subsequent line
-  #  checks for failures (manifest by having duplicate Sp1 codes with two age = 1, 2 etc.)
-  # cds[, Sp1 := as.integer(factor(-maxB)), by = c("pixelGroup")]
-  # dd <- duplicated(cds, by = c("pixelGroup", "age", "Sp1"))
-  # if (any(dd)) {
-  #   pgsWithDups <- unique(cds$pixelGroup[dd])
-  #   cdDups <- cds[pixelGroup %in% pgsWithDups]
-  #   corrections <- cdDups[, list(Sp1 = seq_along(unique(speciesCode)),
-  #                                speciesCode = unique(speciesCode)), by = "pixelGroup"]
-  #   set(cdDups, NULL, "Sp1", NULL)
-  #   corrections <- cdDups[corrections, on = c("pixelGroup", "speciesCode")]
-  #   cds <- rbindlist(list(cds[!(pixelGroup %in% pgsWithDups)], corrections))
-  # }
-  #
-  # cds[, Sp := paste0("Sp", Sp1)]
-  # cds <- cds[Sp %in% paste0("Sp", 1:numSpeciesKeep)] # keep only most abundant X species
-  # cdSpeciesCodes <- cds[, list(Sp = Sp[1]), by = c("speciesCode", "pixelGroup")]
-  # set(cds, NULL, c("Sp1", "maxB", "speciesCode"), NULL)
-  #
-  # # Convert to wide format
-  # cdWide <- dcast(cds, pixelGroup + age ~ Sp, value.var = "B")
-  # setnames(cdWide, old = "pixelGroup", new = "id")
-  #
-  # # Convert NAs to zeros
-  # for (column in colnames(cdWide)) {
-  #   if (anyNA(cdWide[[column]])) {
-  #     set(cdWide, which(is.na(cdWide[[column]])), column, 0L)
-  #   }
-  # }
   list(cdWide = cds, cdSpeciesCodes = cdSpeciesCodes)
 }
 
 runBiomass_core <- function(moduleNameAndBranch, paths, cohortData, species, simEnv) {
-  # Get modules if using stand alone module
+  # get modules if using stand alone module
   if (!is.null(moduleNameAndBranch)) {
     getModule(moduleNameAndBranch, modulePath = paths$modulePath, overwrite = TRUE) # will only overwrite if wrong version
   }
   speciesNameConvention <- LandR::equivalentNameColumn(species$species, LandR::sppEquivalencies_CA)
+  
+  # initialize all cohorts to age 0, biomass of 1, and simulation time to largest longevity
   cohortDataForYield <- Copy(cohortData)
   cohortDataForYield$B <- 1L
   cohortDataForYield$age <- 0L
@@ -203,7 +169,6 @@ runBiomass_core <- function(moduleNameAndBranch, paths, cohortData, species, sim
   dig1 <- lapply(filesToDigest, function(fn) digest::digest(file = fn))
   
   dig <- CacheDigest(list(species, cohortDataForYield, timesForYield, dig1))
-  
   simOutputs <- expand.grid(objectName = "cohortData",
                             saveTime = unique(seq(timesForYield$start, timesForYield$end, by = 1)),
                             eventPriority = 1,
@@ -233,6 +198,9 @@ runBiomass_core <- function(moduleNameAndBranch, paths, cohortData, species, sim
       , "seedingAlgorithm" = "noSeeding"
     )
   )
+  paths$outputPath <- file.path(paths$outputPath, "cohortDataYield")
+  
+  # run Biomass_core without dispersal
   simOutputs <- Cache(simInitAndSpadesClearEnv,
                       paths = paths,
                       times = timesForYield,
@@ -245,7 +213,6 @@ runBiomass_core <- function(moduleNameAndBranch, paths, cohortData, species, sim
   list(simOutputs = simOutputs, digest = dig)
 }
 
-### add additional events as needed by copy/pasting from above
 ReadExperimentFiles <- function(factorialOutputs) {
   
   factorialOutputs <- as.data.table(factorialOutputs)[objectName == "cohortData"]
