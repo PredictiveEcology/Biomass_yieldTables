@@ -109,7 +109,7 @@ doEvent.Biomass_yieldTables = function(sim, eventTime, eventType) {
       message("Converting to CBM Growth Increment ... This may take several minutes")
       cdObjs <- Cache(generateYieldTables, .cacheExtra = mod$digest$outputHash, cohortDataAll, numSpeciesKeep = 3,
                       omitArgs = c("cohortData"))
-      sim$CBM_AGB <- cdObjs$cdWide
+      sim$CBM_AGB <- cdObjs$cds
       sim$CBM_speciesCodes <- cdObjs$cdSpeciesCodes
       rm(cdObjs, cohortDataAll)
       gc()
@@ -147,7 +147,7 @@ generateYieldTables <- function(cohortData, numSpeciesKeep = 3) {
   # Remove columns
   cds[, speciesCode := NULL]
   
-  list(cdWide = cds, cdSpeciesCodes = cdSpeciesCodes)
+  list(cds = cds, cdSpeciesCodes = cdSpeciesCodes)
 }
 
 runBiomass_core <- function(moduleNameAndBranch, paths, cohortData, species, simEnv) {
