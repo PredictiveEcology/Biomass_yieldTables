@@ -35,6 +35,25 @@ defineModule(sim, list(
                     "Human-readable name for the study area used. If NA, a hash of studyArea will be used.")
   ),
   inputObjects = bindrows(
+    expectsInput("cohortData", "data.table",
+                 desc = paste("`data.table` with cohort-level information on age and biomass, by `pixelGroup` and ecolocation",
+                              "(i.e., `ecoregionGroup`) with the following columns: `pixelGroup` (integer),",
+                              "`ecoregionGroup` (factor), `speciesCode` (factor), `B` (integer in $g/m^2$), `age`",
+                              "(integer in years). Must be supplied by the user or created in another module",
+                              "like *biomass_BiomassDataPrep*.")),
+    expectsInput("species", "data.table",
+                 desc = paste("A table of invariant species traits with the following trait colums:",
+                              "'species', 'Area', 'longevity', 'sexualmature', 'shadetolerance',",
+                              "'firetolerance', 'seeddistance_eff', 'seeddistance_max', 'resproutprob',",
+                              "'mortalityshape', 'growthcurve', 'resproutage_min', 'resproutage_max',",
+                              "'postfireregen', 'wooddecayrate', 'leaflongevity' 'leafLignin',",
+                              "'hardsoft'. The last seven traits are not used in *Biomass_core*,",
+                              "and may be ommited. However, this may result in downstream issues with",
+                              "other modules. Must be supplied by the user or created in another module",
+                              "like *biomass_BiomassDataPrep*.")),
+    expectsInput("studyArea", "sfc",
+                 desc = paste("Polygon to use as the study area. Must be supplied by the user. Can also be a SpatVector."))
+    
   ),
   outputObjects = bindrows(
     createsOutput(objectName = "simOutputs", objectClass = "data.frame",
@@ -70,7 +89,7 @@ doEvent.Biomass_yieldTables = function(sim, eventTime, eventType) {
                            eventPriority = -1)
       sim <- scheduleEvent(sim, time(sim), "Biomass_yieldTables", "plotYieldTables",
                            eventPriority = -1)
-
+      
     },
     generateData = {
       biomassCoresOuts <- runBiomass_core(Par$moduleNameAndBranch, mod$paths, sim$cohortData, sim$species,
@@ -83,7 +102,7 @@ doEvent.Biomass_yieldTables = function(sim, eventTime, eventType) {
       cohortDataAll <- Cache(ReadExperimentFiles, omitArgs = "factorialOutputs",
                              .cacheExtra = mod$digest$outputHash, as.data.table(sim$simOutputs)[saved == TRUE])  # function already exists
       message("Converting to CBM Growth Increment ... This may take several minutes")
-      cdObjs <- Cache(generateYieldTables, .cacheExtra = mod$digest$outputHash, cohortDataAll,
+      cdObjs <- Cache(generateYieldTables, .cacheExtra = mod$digest$outputHash, cohortDataAll, numSpeciesKeep = 3,
                       omitArgs = c("cohortData"))
       sim$CBM_AGB <- cdObjs$cdWide
       sim$CBM_speciesCodes <- cdObjs$cdSpeciesCodes
@@ -106,22 +125,64 @@ doEvent.Biomass_yieldTables = function(sim, eventTime, eventType) {
 
 
 # setkey(cds, pixelGroup, age)
-generateYieldTables <- function(cohortData) {
+generateYieldTables <- function(cohortData, numSpeciesKeep = 3) {
   cds <- cohortData
   setkeyv(cds, c("speciesCode", "pixelGroup"))
   # Because LandR biomass will lump all age < 11 into age 0
   if ((sum(cds$age[cds$pixelGroup == 1] == 0) %% 11) == 0) {
     cds[age == 0, age := 0:10, by = c("pixelGroup", "speciesCode")]
   }
-
+  
   # Add cohort_id. One cohort_id per pixelGroup x species
   cds[, cohort_id:=.GRP, by = c("pixelGroup", "speciesCode")]
-
+  
   # Create reference table
   cdSpeciesCodes <- unique(cds[, .(cohort_id, pixelGroup, speciesCode)])
-
+  
   # Remove columns
   cds[, speciesCode := NULL]
+  
+  # # Fix the age = 0 problem
+  # cds[, maxB := max(B), by = c("pixelGroup", "speciesCode")]
+  # set(cds, NULL, "maxB", as.integer(cds$maxB))
+  
+  # # Sort them by maxB, in reverse order -- so first one in the list is largest maxB
+  # setorderv(cds, c("maxB"), order = -1L)
+  # suppressWarnings(set(cds, NULL, "Sp", NULL))
+  #
+  #
+  #
+  #
+  # The next line is an efficient shortcut to getting a unique Sp1 per speciesCode within pixelGroup
+  #  However, it can fail when two species have exactly the same maxB. So, subsequent line
+  #  checks for failures (manifest by having duplicate Sp1 codes with two age = 1, 2 etc.)
+  # cds[, Sp1 := as.integer(factor(-maxB)), by = c("pixelGroup")]
+  # dd <- duplicated(cds, by = c("pixelGroup", "age", "Sp1"))
+  # if (any(dd)) {
+  #   pgsWithDups <- unique(cds$pixelGroup[dd])
+  #   cdDups <- cds[pixelGroup %in% pgsWithDups]
+  #   corrections <- cdDups[, list(Sp1 = seq_along(unique(speciesCode)),
+  #                                speciesCode = unique(speciesCode)), by = "pixelGroup"]
+  #   set(cdDups, NULL, "Sp1", NULL)
+  #   corrections <- cdDups[corrections, on = c("pixelGroup", "speciesCode")]
+  #   cds <- rbindlist(list(cds[!(pixelGroup %in% pgsWithDups)], corrections))
+  # }
+  #
+  # cds[, Sp := paste0("Sp", Sp1)]
+  # cds <- cds[Sp %in% paste0("Sp", 1:numSpeciesKeep)] # keep only most abundant X species
+  # cdSpeciesCodes <- cds[, list(Sp = Sp[1]), by = c("speciesCode", "pixelGroup")]
+  # set(cds, NULL, c("Sp1", "maxB", "speciesCode"), NULL)
+  #
+  # # Convert to wide format
+  # cdWide <- dcast(cds, pixelGroup + age ~ Sp, value.var = "B")
+  # setnames(cdWide, old = "pixelGroup", new = "id")
+  #
+  # # Convert NAs to zeros
+  # for (column in colnames(cdWide)) {
+  #   if (anyNA(cdWide[[column]])) {
+  #     set(cdWide, which(is.na(cdWide[[column]])), column, 0L)
+  #   }
+  # }
   list(cdWide = cds, cdSpeciesCodes = cdSpeciesCodes)
 }
 
@@ -135,14 +196,14 @@ runBiomass_core <- function(moduleNameAndBranch, paths, cohortData, species, sim
   cohortDataForYield$B <- 1L
   cohortDataForYield$age <- 0L
   timesForYield <- list(start = 0, end = max(species$longevity))
-
+  
   # pick out the elements of the simList that are relevant for Caching -- not everything is
   modPath <- file.path(paths$modulePath, "Biomass_core")
   filesToDigest <- c(dir(file.path(modPath, "R"), full.names = TRUE), file.path(modPath, "Biomass_core.R"))
   dig1 <- lapply(filesToDigest, function(fn) digest::digest(file = fn))
-
+  
   dig <- CacheDigest(list(species, cohortDataForYield, timesForYield, dig1))
-
+  
   simOutputs <- expand.grid(objectName = "cohortData",
                             saveTime = unique(seq(timesForYield$start, timesForYield$end, by = 1)),
                             eventPriority = 1,
@@ -186,7 +247,7 @@ runBiomass_core <- function(moduleNameAndBranch, paths, cohortData, species, sim
 
 ### add additional events as needed by copy/pasting from above
 ReadExperimentFiles <- function(factorialOutputs) {
-
+  
   factorialOutputs <- as.data.table(factorialOutputs)[objectName == "cohortData"]
   fEs <- .fileExtensions()
   cdsList <- by(factorialOutputs, factorialOutputs[, "saveTime"], function(x) {
@@ -201,7 +262,7 @@ ReadExperimentFiles <- function(factorialOutputs) {
   gc() # need to clear memory
   message("rbindlisting the cohortData objects")
   cds <- rbindlist(cdsList, use.names = TRUE, fill = TRUE)
-
+  
   return(invisible(cds))
 }
 
@@ -221,3 +282,25 @@ pltfn <- function(AGB, sp, numPlots) {
     facet_wrap(~pixelGroup)
   return(invisible(gg))
 }
+
+## .inputObjects ------------------------------------------------------------------------------
+.inputObjects <- function(sim) {
+  cacheTags <- c(currentModule(sim), "function:.inputObjects")
+  dPath <- asPath(getOption("reproducible.destinationPath", dataPath(sim)), 1)
+  message(currentModule(sim), ": using dataPath '", dPath, "'.")
+  
+  if (!suppliedElsewhere("studyArea", sim)) {
+    stop("Please provide a 'studyArea' polygon")
+  }
+  
+  if (!suppliedElsewhere("cohortData", sim)) {
+    stop("Please provide a 'cohortData' table or use a module like Biomass_borealDataPrep")
+  }
+  
+  if (!suppliedElsewhere("species", sim)) {
+    stop("Please provide a 'species' table or use a module like Biomass_borealDataPrep")
+  }
+  
+  return(invisible(sim))
+}
+
