@@ -61,7 +61,7 @@ defineModule(sim, list(
     
   ),
   outputObjects = bindrows(
-    createsOutput(objectName = "simOutputs", objectClass = "data.frame",
+    createsOutput(objectName = "yieldOutputs", objectClass = "data.frame",
                   desc = "A data.frame showing the cohortData files that were created during this ",
                   "module. Normally, these can be deleted as they are re-read within this module ",
                   "and converted into CBM_AGB and CBM_speciesCodes."),
@@ -99,7 +99,7 @@ doEvent.Biomass_yieldTables = function(sim, eventTime, eventType) {
     generateData = {
       biomassCoresOuts <- runBiomass_core(Par$moduleNameAndBranch, mod$paths, sim$cohortData, sim$species,
                                           simEnv = envir(sim))
-      sim$simOutputs <- biomassCoresOuts$simOutputs
+      sim$yieldOutputs <- biomassCoresOuts$simOutputs
       mod$digest <- biomassCoresOuts$digest
     },
     generateYieldTables = {
