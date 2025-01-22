@@ -1,3 +1,5 @@
+
+
 runBiomass_core <- function(moduleNameAndBranch, paths, cohortData, species, simEnv) {
   # get modules if using stand alone module
   if (!is.null(moduleNameAndBranch)) {
@@ -59,4 +61,10 @@ runBiomass_core <- function(moduleNameAndBranch, paths, cohortData, species, sim
                       debug = 1, omitArgs = c("objects", "times", "debug"), .cacheExtra = dig
   )
   list(simOutputs = simOutputs, digest = dig)
+}
+
+simInitAndSpadesClearEnv <- function(...) {
+  simOut <- simInitAndSpades(...)
+  rm(list = ls(simOut, all.names = TRUE), envir = envir(simOut))
+  outputs(simOut)
 }
