@@ -86,7 +86,7 @@ doEvent.Biomass_yieldTables = function(sim, eventTime, eventType) {
     init = {
       mod$paths <- paths(sim)
       if (!is.null(Par$moduleNameAndBranch)) {
-        mod$paths$modulePath <- file.path(dataPath(sim), "module")
+        mod$paths$modulePath <- file.path(modulePath(sim), currentModule(sim), "submodules")
       }
       sim <- scheduleEvent(sim, time(sim), "Biomass_yieldTables", "generateData",
                            eventPriority = -1)
@@ -97,8 +97,9 @@ doEvent.Biomass_yieldTables = function(sim, eventTime, eventType) {
       
     },
     generateData = {
-      biomassCoresOuts <- runBiomass_core(Par$moduleNameAndBranch, mod$paths, sim$cohortData, sim$species,
-                                          simEnv = envir(sim))
+      biomassCoresOuts <-  Cache(runBiomass_core, moduleNameAndBranch = Par$moduleNameAndBranch,
+                                 paths = mod$paths, cohortData = sim$cohortData,
+                                 species = sim$species, simEnv = envir(sim))
       sim$yieldOutputs <- biomassCoresOuts$simOutputs
       mod$digest <- biomassCoresOuts$digest
     },
@@ -107,8 +108,7 @@ doEvent.Biomass_yieldTables = function(sim, eventTime, eventType) {
       cohortDataAll <- Cache(ReadExperimentFiles, omitArgs = "factorialOutputs",
                              .cacheExtra = mod$digest$outputHash, as.data.table(sim$simOutputs)[saved == TRUE])  # function already exists
       message("Converting to CBM Growth Increment ... This may take several minutes")
-      cdObjs <- Cache(generateYieldTables, .cacheExtra = mod$digest$outputHash, cohortDataAll, numSpeciesKeep = 3,
-                      omitArgs = c("cohortData"))
+      cdObjs <- Cache(generateYieldTables, .cacheExtra = mod$digest$outputHash, cohortDataAll, omitArgs = c("cohortData"))
       sim$CBM_AGB <- cdObjs$cds
       sim$CBM_speciesCodes <- cdObjs$cdSpeciesCodes
       rm(cdObjs, cohortDataAll)
@@ -130,8 +130,8 @@ doEvent.Biomass_yieldTables = function(sim, eventTime, eventType) {
 
 
 # setkey(cds, pixelGroup, age)
-generateYieldTables <- function(cohortData, numSpeciesKeep = 3) {
-  cds <- cohortData
+generateYieldTables <- function(cohortData) {
+  cds <- copy(cohortData)
   setkeyv(cds, c("speciesCode", "pixelGroup"))
   # Because LandR biomass will lump all age < 11 into age 0
   if ((sum(cds$age[cds$pixelGroup == 1] == 0) %% 11) == 0) {
