@@ -1,8 +1,11 @@
 
+
 if (!testthat::is_testing()){
   library(testthat)
   testthat::source_test_helpers(env = globalenv())
 }
+
+Require::Require("archive")
 
 # Set teardown environment
 teardownEnv <- if (testthat::is_testing()) testthat::teardown_env() else parent.frame()
@@ -22,15 +25,15 @@ withr::defer({
 ## This will hopefully be handled by testthat if a DESCRIPTION file is added.
 .test_copyModule(testDirs$Rproj, testDirs$temp$modules)
 
-# Set reproducible options:
-# - Silence messaging
-if (testthat::is_testing()) withr::local_options(list(reproducible.verbose = -2), .local_envir = teardownEnv)
-
-# Set Require package options:
-# - Clone R packages from user library
-# - Silence messaging
-withr::local_options(list(Require.cloneFrom = Sys.getenv("R_LIBS_USER")), .local_envir = teardownEnv)
-if (testthat::is_testing()) withr::local_options(list(Require.verbose = -2), .local_envir = teardownEnv)
+# Set reproducible options
+withr::local_options(list(
+  reproducible.verbose = -2,
+  reproducible.cachePath = testDirs$temp$root # Example of caching location
+), .local_envir = teardownEnv)
 
 # Set SpaDES.project option to never update R profile
 withr::local_options(list(SpaDES.project.updateRprofile = FALSE), .local_envir = teardownEnv)
+
+# Source the function
+source(file.path(testDirs$Rproj, "R", "pltfn.R"))
+

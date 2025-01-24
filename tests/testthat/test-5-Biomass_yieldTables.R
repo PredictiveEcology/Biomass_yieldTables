@@ -1,17 +1,8 @@
 test_that("module runs with small example", {
-  module <- list("Biomass_yieldTables")
-  path <- list(
-    modulePath  = testDirs$temp$modules,
-    inputPath   = testDirs$temp$inputs
-  )
-  parameters <- list(
-    #.progress = list(type = graphical, interval = 1),
-    .globals = list(verbose = FALSE),
-    Biomass_yieldTables = list(.saveInitialTime = NA)
-  )
-
-  # This is a simList created by the module biomass_borealDataPrep.
-  # The study area is a XX a located in Northeast BC
+  library(SpaDES.core)
+  library(SpaDES.project)
+  # This runs the module with a simList created by the module biomass_borealDataPrep.
+  # The study area is a 9km^2 a located in Northeast BC
   # Created with:
   # SpaDES.project::setupProject(
   #   Restart = TRUE,
@@ -45,12 +36,13 @@ test_that("module runs with small example", {
   #   studyArea = {
   #     reproducible::prepInputs(url = "https://drive.google.com/file/d/1LxacDOobTrRUppamkGgVAUFIxNT4iiHU/view?usp=sharing",
   #                              destinationPath = "inputs",
-  #                              fun = terra::vect(),
   #                              overwrite = TRUE) |>
-  #       terra::crop(terra::ext(1130000, 1140000, 1250000, 1260000)) |>
+  #       terra::vect() |>
+  #       terra::crop(terra::ext(1127000, 1130000, 1267000, 1270000)) |>
   #       terra::aggregate()
   #   },
   #   studyAreaLarge = studyArea,
+  #   sppNameVector = c("Abie_las", "Pice_mar"),
   #   rasterToMatch = {
   #     rtm <- terra::rast(studyArea, res = c(250, 250))
   #     rtm[] <- 1
@@ -58,58 +50,76 @@ test_that("module runs with small example", {
   #     rtm
   #   }
   # )
+  sim <- SpaDES.core::loadSimList(file.path(test_path(), "testdata", "smallSimOut.zip"), 
+                                  projectPath = file.path(testDirs$temp$projects, "5-Biomass_borealDataPrep"))
+
+  simInitInput <- .SpaDESwithCallingHandlers(
+    SpaDES.project::setupProject(
+      
+      modules = "Biomass_yieldTables",
+      paths   = list(
+        projectPath = file.path(testDirs$temp$projects, "5-Biomass_yieldTables"),
+        modulePath  = testDirs$temp$modules,
+        inputPath   = testDirs$temp$inputs
+      ),
+      params = list(
+        #.progress = list(type = graphical, interval = 1),
+        .globals = list(verbose = FALSE),
+        Biomass_yieldTables = list(.saveInitialTime = NA)
+      ),
+      require = c("testthat", "SpaDES.project", "SpaDES.core", "LandR"),
+      studyArea = sim$studyArea,
+      cohortData = sim$cohortData,
+      species = sim$species
+    )
+  )
+
+  simTestInit <- .SpaDESwithCallingHandlers(
+    SpaDES.core::simInit2(simInitInput)
+  )
+
+  # is output a simList?
+  expect_s4_class(simTestInit, "simList")
   
-  objects <- readRDS(file.path(test_path(), "testdata", "smallSimOut.RDS"))
-  
-  mySim <- .SpaDESwithCallingHandlers(
-    simInit(params = parameters,
-            modules = module,
-            objects = objects,
-            paths = path)
+  simTest <- .SpaDESwithCallingHandlers(
+    SpaDES.core::spades(simTestInit, debug = FALSE)
   )
   
   # is output a simList?
-  expect_s4_class(output, "simList")
-  
-  output <- .SpaDESwithCallingHandlers(
-    spades(mySim, debug = FALSE)
-  )
-  
-  # is output a simList?
-  expect_s4_class(output, "simList")
+  expect_s4_class(simTest, "simList")
 
   # does output have your module in it
-  expect_true(any(unlist(modules(output)) %in% c(unlist(module))))
+  expect_true(any(unlist(modules(simTest)) %in% c(unlist(module))))
 
   # did it run to the end?
-  expect_true(time(output) == max(objects$species$longevity))
+  expect_true(time(simTest) == max(simTest$species$longevity))
 
   # check output CBM_AGB
-  expect_true(!is.null(output$CBM_AGB))
-  expect_true(inherits(output$CBM_AGB, "data.table"))
+  expect_true(!is.null(simTest$CBM_AGB))
+  expect_true(inherits(simTest$CBM_AGB, "data.table"))
   
   expected_colnames <- c("pixelGroup", "age", "B", "cohort_id")
-  expect_true(all(names(output$CBM_AGB) %in% expected_colnames))
-  expect_true(all(expected_colnames %in% names(output$CBM_AGB)))
+  expect_true(all(names(simTest$CBM_AGB) %in% expected_colnames))
+  expect_true(all(expected_colnames %in% names(simTest$CBM_AGB)))
   
-  expect_type(output$CBM_AGB$pixelGroup, "integer")
-  expect_type(output$CBM_AGB$age, "integer")
-  expect_type(output$CBM_AGB$B, "numeric")
-  expect_type(output$CBM_AGB$cohort_id, "integer")
+  expect_type(simTest$CBM_AGB$pixelGroup, "integer")
+  expect_type(simTest$CBM_AGB$age, "integer")
+  expect_type(simTest$CBM_AGB$B, "numeric")
+  expect_type(simTest$CBM_AGB$cohort_id, "integer")
   
-  expect_true(anyDuplicated(output$CBM_AGB[,c("age", "cohort_id")]) == 0)
+  expect_true(anyDuplicated(simTest$CBM_AGB[,c("age", "cohort_id")]) == 0)
   
   # check output CBM_speciesCodes
-  expect_true(!is.null(output$CBM_speciesCodes))
-  expect_true(inherits(output$CBM_speciesCodes, "data.table"))
+  expect_true(!is.null(simTest$CBM_speciesCodes))
+  expect_true(inherits(simTest$CBM_speciesCodes, "data.table"))
   
   expected_colnames <- c("pixelGroup", "cohort_id", "SpeciesCode")
-  expect_true(all(names(output$CBM_AGB) %in% expected_colnames))
-  expect_true(all(expected_colnames %in% names(output$CBM_AGB)))
+  expect_true(all(names(simTest$CBM_AGB) %in% expected_colnames))
+  expect_true(all(expected_colnames %in% names(simTest$CBM_AGB)))
   
-  expect_type(output$CBM_AGB$pixelGroup, "integer")
-  expect_type(output$CBM_AGB$cohort_id, "integer")
-  expect_type(output$CBM_AGB$SpeciesCode, "character")
+  expect_type(simTest$CBM_AGB$pixelGroup, "integer")
+  expect_type(simTest$CBM_AGB$cohort_id, "integer")
+  expect_type(simTest$CBM_AGB$SpeciesCode, "character")
   
-  expect_true(anyDuplicated(output$CBM_AGB$cohort_id) == 0)
+  expect_true(anyDuplicated(simTest$CBM_AGB$cohort_id) == 0)
 })

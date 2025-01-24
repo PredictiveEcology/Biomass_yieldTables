@@ -1,5 +1,8 @@
 test_that("plot function works", {
   
+  library(data.table)
+  library(ggplot2)
+  
   #####
   # dummy inputs
   ngroup <- 3
@@ -28,7 +31,7 @@ test_that("plot function works", {
   expect_no_error(pltfn(AGB, sp, 1))
   
   # number of facets
-  expect_equal(length(levels(ggplot_build(pltfn(AGB, sp, 2))$data[[1]]$PANEL)), 2)
-  expect_equal(length(levels(ggplot_build(pltfn(AGB, sp, 10))$data[[1]]$PANEL)), ngroup)
+  expect_equal(length(levels(ggplot2::ggplot_build(pltfn(AGB, sp, 2))$data[[1]]$PANEL)), 2)
+  expect_equal(length(levels(ggplot2::ggplot_build(pltfn(AGB, sp, 10))$data[[1]]$PANEL)), ngroup)
   
-  })
+})
