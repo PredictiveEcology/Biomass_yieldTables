@@ -16,7 +16,7 @@ defineModule(sim, list(
   timeunit = "year",
   citation = list("citation.bib"),
   documentation = deparse(list("README.md", "Biomass_yieldTables.Rmd")), ## same file
-  reqdPkgs = list("data.table", "PredictiveEcology/SpaDES.core@development (>= 1.0.9.9008)", "LandR"),
+  reqdPkgs = list("data.table", "PredictiveEcology/SpaDES.core@development (>= 1.0.9.9008)", "LandR", "terra"),
   parameters = rbind(
     defineParameter(".useCache", "character", c("generateData", "generateYieldTables"), NA, NA,
                     "Should caching of events or module be used?"),

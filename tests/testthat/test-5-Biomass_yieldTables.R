@@ -50,9 +50,13 @@ test_that("module runs with small example", {
   #     rtm
   #   }
   # )
-  sim <- SpaDES.core::loadSimList(file.path(test_path(), "testdata", "smallSimOut.zip"), 
-                                  projectPath = file.path(testDirs$temp$projects, "5-Biomass_borealDataPrep"))
 
+  browser()
+  simOut <- SpaDES.core::loadSimList(file.path(test_path(), "testdata", "smallSimOut.zip"),
+                                     projectPath = file.path(testDirs$temp$projects, "5-Biomass_borealDataPrep"))
+  outs <- lapply(objects(simOut), function(x) simOut[[x]])
+  names(outs) <- objects(simOut)
+  
   simInitInput <- .SpaDESwithCallingHandlers(
     SpaDES.project::setupProject(
       
@@ -67,10 +71,8 @@ test_that("module runs with small example", {
         .globals = list(verbose = FALSE),
         Biomass_yieldTables = list(.saveInitialTime = NA)
       ),
-      require = c("testthat", "SpaDES.project", "SpaDES.core", "LandR"),
-      studyArea = sim$studyArea,
-      cohortData = sim$cohortData,
-      species = sim$species
+      require = c("testthat", "SpaDES.project", "SpaDES.core", "LandR", "terra"),
+      objects = outs
     )
   )
 
