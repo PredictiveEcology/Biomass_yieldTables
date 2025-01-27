@@ -34,7 +34,5 @@ withr::local_options(list(
 # Set SpaDES.project option to never update R profile
 withr::local_options(list(SpaDES.project.updateRprofile = FALSE), .local_envir = teardownEnv)
 
-# Source the function
-source(file.path(testDirs$Rproj, "R", "pltfn.R"))
-source(file.path(testDirs$Rproj, "R", "runBiomass_core.R"))
-source(file.path(testDirs$Rproj, "R", "ReadExperimentFiles.R"))
+# Source the functions
+lapply(list.files(file.path(testDirs$Rproj, "R")), source)

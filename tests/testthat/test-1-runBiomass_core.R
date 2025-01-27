@@ -1,6 +1,6 @@
 test_that("function runBiomass_core works", {
   Require::Require(c("SpaDES.core", "SpaDES.project"))
-  # get inputs
+
   # This runs the module with a simList created by the module biomass_borealDataPrep.
   # The study area is a 9km^2 a located in Northeast BC
   # Created with:
@@ -52,7 +52,7 @@ test_that("function runBiomass_core works", {
   # )
   
   
-  simOut <- SpaDES.core::loadSimList(file.path(test_path(), "testdata", "smallSimOut.zip"),
+  simOut <- SpaDES.core::loadSimList(file.path(test_path(), "fixtures", "smallSimOut.zip"),
                                      projectPath = file.path(testDirs$temp$projects, "5-Biomass_borealDataPrep"))
 
   

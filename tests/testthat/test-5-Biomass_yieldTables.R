@@ -2,9 +2,13 @@ test_that("module runs with small example", {
   library(SpaDES.core)
   library(SpaDES.project)
   library(terra)
-  # This runs the module with a simList created by the module biomass_borealDataPrep.
-  # The study area is a 9km^2 a located in Northeast BC
-  # Created with:
+  
+  # This runs the module with a simList created by the modules 
+  # biomass_borealDataPrep and biomass_speciesParameters.
+  
+  # The study area is a 9km^2 a located in Northeast BC with a 500m resolution
+  # The data is created with:
+  
   # SpaDES.project::setupProject(
   #   Restart = TRUE,
   #   functions = "../Yield/R/getRIA.R",
@@ -52,7 +56,7 @@ test_that("module runs with small example", {
   #   }
   # )
 
-  simOut <- SpaDES.core::loadSimList(file.path(test_path(), "testdata", "smallSimOut.zip"),
+  simOut <- SpaDES.core::loadSimList(file.path(test_path(), "fixtures", "smallSimOut.zip"),
                                      projectPath = file.path(testDirs$temp$projects, "5-Biomass_borealDataPrep"))
   outs <- lapply(objects(simOut), function(x) simOut[[x]])
   names(outs) <- objects(simOut)
