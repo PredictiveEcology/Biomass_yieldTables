@@ -1,4 +1,4 @@
-test_that("runBiomass_core works", {
+test_that("function runBiomass_core works", {
   Require::Require(c("SpaDES.core", "SpaDES.project"))
   # get inputs
   # This runs the module with a simList created by the module biomass_borealDataPrep.

@@ -1,4 +1,4 @@
-test_that("plot function works", {
+test_that("function pltfn works", {
   
   library(data.table)
   library(ggplot2)
