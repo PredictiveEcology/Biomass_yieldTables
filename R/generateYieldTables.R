@@ -5,7 +5,6 @@ generateYieldTables <- function(cohortData) {
   if ((sum(cds$age[cds$pixelGroup == 1] == 0) %% 11) == 0) {
     cds[age == 0, age := 0:10, by = c("pixelGroup", "speciesCode")]
   }
-  
   # Add cohort_id. One cohort_id per pixelGroup x species
   cds[, cohort_id:=.GRP, by = c("pixelGroup", "speciesCode")]
   
