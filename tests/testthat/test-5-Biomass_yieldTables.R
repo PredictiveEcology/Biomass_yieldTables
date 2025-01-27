@@ -1,6 +1,7 @@
 test_that("module runs with small example", {
   library(SpaDES.core)
   library(SpaDES.project)
+  library(terra)
   # This runs the module with a simList created by the module biomass_borealDataPrep.
   # The study area is a 9km^2 a located in Northeast BC
   # Created with:
@@ -51,7 +52,6 @@ test_that("module runs with small example", {
   #   }
   # )
 
-  browser()
   simOut <- SpaDES.core::loadSimList(file.path(test_path(), "testdata", "smallSimOut.zip"),
                                      projectPath = file.path(testDirs$temp$projects, "5-Biomass_borealDataPrep"))
   outs <- lapply(objects(simOut), function(x) simOut[[x]])
@@ -71,7 +71,6 @@ test_that("module runs with small example", {
         .globals = list(verbose = FALSE),
         Biomass_yieldTables = list(.saveInitialTime = NA)
       ),
-      require = c("testthat", "SpaDES.project", "SpaDES.core", "LandR", "terra"),
       objects = outs
     )
   )

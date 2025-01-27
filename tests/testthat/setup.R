@@ -36,4 +36,4 @@ withr::local_options(list(SpaDES.project.updateRprofile = FALSE), .local_envir =
 
 # Source the function
 source(file.path(testDirs$Rproj, "R", "pltfn.R"))
-
+source(file.path(testDirs$Rproj, "R", "runBiomass_core.R"))
