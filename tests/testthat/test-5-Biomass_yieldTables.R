@@ -64,7 +64,8 @@ test_that("module runs with small example", {
       paths   = list(
         projectPath = file.path(testDirs$temp$projects, "5-Biomass_yieldTables"),
         modulePath  = testDirs$temp$modules,
-        inputPath   = testDirs$temp$inputs
+        inputPath   = testDirs$temp$inputs,
+        outputPath = testDirs$temp$outputs
       ),
       params = list(
         #.progress = list(type = graphical, interval = 1),

@@ -49,7 +49,6 @@ runBiomass_core <- function(moduleNameAndBranch, paths, cohortData, species, sim
     )
   )
   paths$outputPath <- file.path(paths$outputPath, "cohortDataYield")
-  
   # run Biomass_core without dispersal
   simOutputs <- Cache(simInitAndSpadesClearEnv,
                       paths = paths,

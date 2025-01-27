@@ -106,7 +106,7 @@ doEvent.Biomass_yieldTables = function(sim, eventTime, eventType) {
     generateYieldTables = {
       message("Loading in cohortData files")
       cohortDataAll <- Cache(ReadExperimentFiles, omitArgs = "factorialOutputs",
-                             .cacheExtra = mod$digest$outputHash, as.data.table(sim$simOutputs)[saved == TRUE])  # function already exists
+                             .cacheExtra = mod$digest$outputHash, as.data.table(sim$yieldOutputs)[saved == TRUE])  # function already exists
       message("Converting to CBM Growth Increment ... This may take several minutes")
       cdObjs <- Cache(generateYieldTables, .cacheExtra = mod$digest$outputHash, cohortDataAll, omitArgs = c("cohortData"))
       sim$CBM_AGB <- cdObjs$cds
