@@ -35,4 +35,4 @@ withr::local_options(list(
 withr::local_options(list(SpaDES.project.updateRprofile = FALSE), .local_envir = teardownEnv)
 
 # Source the functions
-lapply(list.files(file.path(testDirs$Rproj, "R")), source)
+lapply(list.files(file.path(testDirs$Rproj, "R"), full.names = TRUE), source)
