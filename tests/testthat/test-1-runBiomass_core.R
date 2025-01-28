@@ -1,19 +1,19 @@
 test_that("function runBiomass_core works", {
   Require::Require(c("SpaDES.core", "SpaDES.project"))
-
-  # This runs the module with a simList created by the module biomass_borealDataPrep.
-  # The study area is a 9km^2 a located in Northeast BC
+  
+  # This runs the function runBiomass_core with a simList created by 
+  # the module biomass_borealDataPrep.
+  # The study area is a ~10km^2 a located in Northeast BC
+  
   # Created with:
-  # SpaDES.project::setupProject(
+  
+  # out <- SpaDES.project::setupProject(
   #   Restart = TRUE,
-  #   functions = "../Yield/R/getRIA.R",
-  #   updateRprofile = TRUE,
-  #   paths = list(projectPath = getwd(),
-  #                inputPath = "inputs",
-  #                outputPath = file.path("outputs"),
-  #                cachePath = "cache"),
-  #   modules = c("PredictiveEcology/Biomass_borealDataPrep@development"),
-  #   #note scfm is a series of modules on a single git repository
+  #   paths = list(projectPath = getwd()),
+  #   options = options(spades.moduleCodeChecks = FALSE,
+  #                     spades.recoveryMode = FALSE),
+  #   modules = c("PredictiveEcology/Biomass_borealDataPrep@development"
+  #   ),
   #   params = list(
   #     .globals = list(
   #       dataYear = 2011, #will get kNN 2011 data, and NTEMS 2011 landcover
@@ -24,37 +24,24 @@ test_that("function runBiomass_core works", {
   #     ),
   #     Biomass_core = list(.plotInterval = 25)
   #   ),
-  #   options = list(#spades.allowInitDuringSimInit = TRUE,
-  #     spades.allowSequentialCaching = TRUE,
-  #     spades.moduleCodeChecks = FALSE,
-  #     spades.recoveryMode = 1,
-  #     LandR.verbose = TRUE #for regen messages
-  #   ),
-  #   packages = c('RCurl', 'XML', 'snow', 'googledrive'),
-  #   times = list(start = 2011, end = 2011),
+  #   packages = c("googledrive", 'RCurl', 'XML', "stars"),
   #   useGit = F,
   #   studyArea = {
   #     reproducible::prepInputs(url = "https://drive.google.com/file/d/1LxacDOobTrRUppamkGgVAUFIxNT4iiHU/view?usp=sharing",
   #                              destinationPath = "inputs",
+  #                              fun = sf::st_read,
   #                              overwrite = TRUE) |>
   #       terra::vect() |>
   #       terra::crop(terra::ext(1127000, 1130000, 1267000, 1270000)) |>
   #       terra::aggregate()
   #   },
   #   studyAreaLarge = studyArea,
-  #   sppNameVector = c("Abie_las", "Pice_mar"),
-  #   rasterToMatch = {
-  #     rtm <- terra::rast(studyArea, res = c(250, 250))
-  #     rtm[] <- 1
-  #     rtm <- terra::mask(rtm, studyArea)
-  #     rtm
-  #   }
+  #   sppNameVector = c("Abie_las", "Popu_tre")
   # )
-  
   
   simOut <- SpaDES.core::loadSimList(file.path(test_path(), "fixtures", "smallSimOut.zip"),
                                      projectPath = file.path(testDirs$temp$projects, "5-Biomass_borealDataPrep"))
-
+  
   
   out <- runBiomass_core(moduleNameAndBranch ="PredictiveEcology/Biomass_core@development", 
                          paths = list(
@@ -72,7 +59,7 @@ test_that("function runBiomass_core works", {
   expect_is(out$simOutputs, "data.frame")
   expect_is(out$digest, "list")
   expect_equal(names(out$digest), c("outputHash", "preDigest"))
-
+  
   #inspect simOutputs
   expect_true(all(out$simOutputs$objectName == "cohortData"))
   expect_true(all(out$simOutputs$saveTime == c(1:nrow(out$simOutputs)-1)))
