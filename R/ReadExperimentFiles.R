@@ -1,5 +1,4 @@
 ReadExperimentFiles <- function(factorialOutputs) {
-  
   factorialOutputs <- as.data.table(factorialOutputs)[objectName == "cohortData"]
   fEs <- .fileExtensions()
   cdsList <- by(factorialOutputs, factorialOutputs[, "saveTime"], function(x) {

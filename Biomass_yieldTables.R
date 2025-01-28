@@ -16,7 +16,7 @@ defineModule(sim, list(
   timeunit = "year",
   citation = list("citation.bib"),
   documentation = deparse(list("README.md", "Biomass_yieldTables.Rmd")), ## same file
-  reqdPkgs = list("data.table", "PredictiveEcology/SpaDES.core@development (>= 1.0.9.9008)"),
+  reqdPkgs = list("data.table", "PredictiveEcology/SpaDES.core@development (>= 1.0.9.9008)", "LandR", "terra"),
   parameters = rbind(
     defineParameter(".useCache", "character", c("generateData", "generateYieldTables"), NA, NA,
                     "Should caching of events or module be used?"),
@@ -25,7 +25,7 @@ defineModule(sim, list(
     defineParameter("numPlots", "integer", 40, NA, NA,
                     "When plotting the yield curves, this is how many unique pixel groups will ",
                     "be randomly selected and plotted"),
-    defineParameter("moduleNameAndBranch", "character", "Biomass_core@development (>= 1.3.9)", NA, NA,
+    defineParameter("moduleNameAndBranch", "character", "PredictiveEcology/Biomass_core@development (>= 1.3.9)", NA, NA,
                     "The branch and version number required for Biomass_core. This will be downloaded ",
                     "into the file.path(dataPath(sim), 'module') of this module, so it does not ",
                     "interact with the main user's modules. If this is set to NULL, then ",
@@ -106,7 +106,7 @@ doEvent.Biomass_yieldTables = function(sim, eventTime, eventType) {
     generateYieldTables = {
       message("Loading in cohortData files")
       cohortDataAll <- Cache(ReadExperimentFiles, omitArgs = "factorialOutputs",
-                             .cacheExtra = mod$digest$outputHash, as.data.table(sim$simOutputs)[saved == TRUE])  # function already exists
+                             .cacheExtra = mod$digest$outputHash, as.data.table(sim$yieldOutputs)[saved == TRUE])  # function already exists
       message("Converting to CBM Growth Increment ... This may take several minutes")
       cdObjs <- Cache(generateYieldTables, .cacheExtra = mod$digest$outputHash, cohortDataAll, omitArgs = c("cohortData"))
       sim$CBM_AGB <- cdObjs$cds

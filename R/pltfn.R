@@ -1,4 +1,13 @@
 pltfn <- function(AGB, sp, numPlots) {
+  numGroups <- length(unique(sp$pixelGroup))
+  
+  if (numPlots <= 0){
+    stop("numPlots needs to be a positive integer")
+  } else if (numPlots > numGroups) {
+    message("numPlots is greater than the number of pixel groups, ",
+            "plotting all pixelgroups.")
+    numPlots <- numGroups
+  }
   pullOutId <- sample(1:max(AGB$pixelGroup), size = numPlots)
   id2 <- AGB[pixelGroup %in% pullOutId]
   setnames(id2, "B", "AGB")
