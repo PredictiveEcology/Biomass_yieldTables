@@ -73,7 +73,6 @@
 # Initialize packages: 
 # Save already loaded packages, install and load required package
 init.test.packages <- function(pkg){
-  initial_packages <- loadedNamespaces()
   repos <- c("predictiveecology.r-universe.dev", getOption("repos"))
   if (!requireNamespace("Require", quietly = TRUE)) {
     install.packages("Require")
@@ -85,9 +84,6 @@ init.test.packages <- function(pkg){
   # Use Require to install and load packages
   Require(packages, dependencies = TRUE, repos = repos)
   
-  return(list(inital_packages = initial_packages,
-              required_packages = pkg)
-         )
 }
 
 unload.test.packages <- function(loaded_pkgs){
