@@ -1,6 +1,6 @@
 test_that("function runBiomass_core works", {
-  Require::Require(c("SpaDES.core", "SpaDES.project"))
-  
+  packages = c("SpaDES.core", "SpaDES.project", "LandR", "data.table", "digest", "reproducible")
+  init.test.packages(packages)
   # This runs the function runBiomass_core with a simList created by 
   # the module biomass_borealDataPrep.
   # The study area is a ~10km^2 a located in Northeast BC
@@ -66,4 +66,5 @@ test_that("function runBiomass_core works", {
   expect_true(all(out$simOutputs$saved))
   expect_true(nrow(out$simOutputs) == max(simOut$species$longevity)+1)
   
+  unload.test.packages(packages)
 })

@@ -8,7 +8,7 @@ runBiomass_core <- function(moduleNameAndBranch, paths, cohortData, species, sim
   speciesNameConvention <- LandR::equivalentNameColumn(species$species, LandR::sppEquivalencies_CA)
   
   # initialize all cohorts to age 0, biomass of 1, and simulation time to largest longevity
-  cohortDataForYield <- Copy(cohortData)
+  cohortDataForYield <- copy(cohortData)
   cohortDataForYield$B <- 1L
   cohortDataForYield$age <- 0L
   timesForYield <- list(start = 0, end = max(species$longevity))

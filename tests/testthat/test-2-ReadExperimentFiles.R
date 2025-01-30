@@ -1,5 +1,6 @@
 test_that("function ReadExperimentFiles works", {
-  
+  packages = c("data.table")
+  init.test.packages(packages)
   # This test runs the function ReadExperimentFiles
   # It uses the outputs produced by the previous test: test-1-runBiomass_core.R
   
@@ -9,5 +10,7 @@ test_that("function ReadExperimentFiles works", {
   
   expect_is(out, "data.table")
   expect_true(all(names(out) == c("speciesCode", "age", "B", "pixelGroup")))
+  
+  unload.test.packages(packages)
   
 })

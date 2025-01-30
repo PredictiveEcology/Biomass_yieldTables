@@ -1,5 +1,6 @@
 test_that("module runs with small example", {
-  Require::Require(c("SpaDES.core", "SpaDES.project"))
+  packages = c("SpaDES.core", "SpaDES.project")
+  init.test.packages(packages)
   
   # This runs the module with a simList created by the modules biomass_borealDataPrep.
   
@@ -108,4 +109,7 @@ test_that("module runs with small example", {
   expect_is(simTest$CBM_speciesCodes$speciesCode, "factor")
   
   expect_true(anyDuplicated(simTest$CBM_speciesCodes$cohort_id) == 0)
+  
+  unload.test.packages(packages)
+  
 })

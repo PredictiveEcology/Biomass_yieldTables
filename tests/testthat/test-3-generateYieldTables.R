@@ -1,5 +1,6 @@
 test_that("function generateYieldTables works", {
-  
+  packages = c("data.table")
+  init.test.packages(packages)
   ngroup <- 3
   age <- c(rep(0, 11), c(11:20))
   nsp <- 2
@@ -30,5 +31,6 @@ test_that("function generateYieldTables works", {
   expect_true(all(colnames(out$cdSpeciesCodes) %in% c("cohort_id", "pixelGroup", "speciesCode")))
   expect_false(any(duplicated(out$cdSpeciesCodes$cohort_id)))
   expect_equal(nrow(out$cdSpeciesCodes), nsp*ngroup)
-              
+  
+  unload.test.packages(packages)
 })
