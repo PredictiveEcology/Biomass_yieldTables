@@ -1,5 +1,4 @@
 generateYieldTables <- function(cohortData, pixelGroupRef) {
-  browser()
   cds <- copy(cohortData)
   setkeyv(cds, c("speciesCode", "pixelGroup"))
   # Because LandR biomass will lump all age < 11 into age 0
