@@ -82,7 +82,7 @@ init.test.packages <- function(pkg){
   library(Require)
   
   # Use Require to install and load packages
-  Require(packages, dependencies = TRUE, repos = repos)
+  Require(pkg, dependencies = TRUE, repos = repos)
   
 }
 

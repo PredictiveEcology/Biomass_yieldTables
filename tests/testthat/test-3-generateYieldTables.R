@@ -13,7 +13,10 @@ test_that("function generateYieldTables works", {
   
   cohortDataAll$B <- as.integer(round(runif(nrow(cohortDataAll), min = 1, max = 100)))
   
-  out <- generateYieldTables(cohortDataAll)
+  pixelGroupRef <- data.table(oldPixelGroup = c(1:6),
+                              newPixelGroup = c(rep(1,2), rep(2,1), rep(3,3)))
+  
+  out <- generateYieldTables(cohortDataAll, pixelGroupRef)
   
   # inspect out
   expect_no_error(generateYieldTables(cohortDataAll))
