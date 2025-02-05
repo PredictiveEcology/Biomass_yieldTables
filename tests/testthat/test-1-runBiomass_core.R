@@ -1,6 +1,5 @@
 test_that("function runBiomass_core works", {
-  Require::Require(c("SpaDES.core", "SpaDES.project"))
-  
+
   # This runs the function runBiomass_core with a simList created by 
   # the module biomass_borealDataPrep.
   # The study area is a ~10km^2 a located in Northeast BC
@@ -39,6 +38,8 @@ test_that("function runBiomass_core works", {
   #   sppNameVector = c("Abie_las", "Popu_tre")
   # )
   
+  updateFactorialOutputs = FALSE
+  
   simOut <- SpaDES.core::loadSimList(file.path(test_path(), "fixtures", "smallSimOut.zip"),
                                      projectPath = file.path(testDirs$temp$projects, "5-Biomass_borealDataPrep"))
   
@@ -53,9 +54,23 @@ test_that("function runBiomass_core works", {
                          species = simOut$species,
                          simEnv = envir(simOut))
   
+  if(updateFactorialOutputs) {
+    cohortDataDir <- file.path(test_path(), "fixtures", "smallSimOut_cohortDataYield")
+    copyDirectory(
+      from = file.path(testDirs$temp$outputs, "cohortDataYield"),
+      to = cohortDataDir,
+      overwrite = TRUE
+    )
+    factorialOutputs <- out$simOutputs
+    factorialOutputs$file <- file.path(cohortDataDir, list.files(cohortDataDir))
+    fwrite(factorialOutputs, file.path(test_path(), "fixtures", "factorialOutputs.csv"))
+    fwrite(out$pixelGroupRef, file.path(test_path(), "fixtures", "pixelGroupRef.csv"))
+  }
+  
+  
   # inspect output class
   expect_is(out, "list")
-  expect_equal(names(out), c("simOutputs", "digest"))
+  expect_equal(names(out), c("simOutputs", "digest", "pixelGroupRef"))
   expect_is(out$simOutputs, "data.frame")
   expect_is(out$digest, "list")
   expect_equal(names(out$digest), c("outputHash", "preDigest"))
@@ -66,4 +81,5 @@ test_that("function runBiomass_core works", {
   expect_true(all(out$simOutputs$saved))
   expect_true(nrow(out$simOutputs) == max(simOut$species$longevity)+1)
   
+  unload.test.packages(packages)
 })

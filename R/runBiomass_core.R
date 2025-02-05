@@ -6,12 +6,24 @@ runBiomass_core <- function(moduleNameAndBranch, paths, cohortData, species, sim
     getModule(moduleNameAndBranch, modulePath = paths$modulePath, overwrite = TRUE) # will only overwrite if wrong version
   }
   speciesNameConvention <- LandR::equivalentNameColumn(species$species, LandR::sppEquivalencies_CA)
-  
   # initialize all cohorts to age 0, biomass of 1, and simulation time to largest longevity
-  cohortDataForYield <- Copy(cohortData)
+  cohortDataForYield <- copy(cohortData)
   cohortDataForYield$B <- 1L
   cohortDataForYield$age <- 0L
   timesForYield <- list(start = 0, end = max(species$longevity))
+  
+  # The following line reduce the number of pixel groups. Pixels of the same 
+  # ecoregion with the same species composition will produce the same Yield Tables. 
+  # To optimise biomass_core we can reduce the number of pixelGroups accordingly,
+  # and retrieve them later.
+  
+  # update pixelGroups
+  newPixelGroups <- updatePixelGroups(cohortDataForYield)
+  cohortDataForYield <- newPixelGroups$cohortData
+  rcl <- as.matrix(
+    cbind(from = newPixelGroups$pixelGroupRef$oldPixelGroup,
+          to = newPixelGroups$pixelGroupRef$newPixelGroup)
+  )
   
   # pick out the elements of the simList that are relevant for Caching -- not everything is
   modPath <- file.path(paths$modulePath, "Biomass_core")
@@ -31,6 +43,7 @@ runBiomass_core <- function(moduleNameAndBranch, paths, cohortData, species, sim
   objectNames <- objectNames[sapply(objectNames, exists, envir = simEnv)]
   objects <- mget(objectNames, envir = simEnv)
   objects$cohortData <- cohortDataForYield
+  objects$pixelGroupMap <- terra::classify(objects$pixelGroupMap, rcl)
   opts <- options("LandR.assertions" = FALSE)
   on.exit(options(opts))
   parameters <- list(
@@ -59,7 +72,8 @@ runBiomass_core <- function(moduleNameAndBranch, paths, cohortData, species, sim
                       objects = objects,
                       debug = 1, omitArgs = c("objects", "times", "debug"), .cacheExtra = dig
   )
-  list(simOutputs = simOutputs, digest = dig)
+  
+  list(simOutputs = simOutputs, digest = dig, pixelGroupRef = newPixelGroups$pixelGroupRef)
 }
 
 simInitAndSpadesClearEnv <- function(...) {

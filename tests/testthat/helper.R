@@ -69,3 +69,26 @@
   }else expr
 }
 
+# Handling package
+# Initialize packages: 
+# Save already loaded packages, install and load required package
+init.test.packages <- function(pkg){
+  repos <- c("predictiveecology.r-universe.dev", getOption("repos"))
+  if (!requireNamespace("Require", quietly = TRUE)) {
+    install.packages("Require")
+  }
+  
+  # Load Require
+  library(Require)
+  
+  # Use Require to install and load packages
+  Require(pkg, dependencies = TRUE, repos = repos)
+  
+}
+
+unload.test.packages <- function(loaded_pkgs){
+  # Unload them
+  for (pkg in loaded_pkgs) {
+    try(detach(paste0("package:", pkg), unload = TRUE, character.only = TRUE), silent = TRUE)
+  }
+}

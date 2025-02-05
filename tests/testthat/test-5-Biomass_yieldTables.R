@@ -1,5 +1,14 @@
 test_that("module runs with small example", {
-  Require::Require(c("SpaDES.core", "SpaDES.project"))
+  # packages = c("SpaDES.core", "SpaDES.project", "terra")
+  # init.test.packages(packages)
+  
+  # Restore paths on teardown
+  pathsOriginal <- list(wd = getwd(), libs = .libPaths())
+  withr::defer({
+    setwd(pathsOriginal$wd)
+    #.libPaths(pathsOriginal$libs)
+  })
+  
   
   # This runs the module with a simList created by the modules biomass_borealDataPrep.
   
@@ -108,4 +117,7 @@ test_that("module runs with small example", {
   expect_is(simTest$CBM_speciesCodes$speciesCode, "factor")
   
   expect_true(anyDuplicated(simTest$CBM_speciesCodes$cohort_id) == 0)
+  
+  # unload.test.packages(packages)
+  
 })

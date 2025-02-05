@@ -36,3 +36,7 @@ withr::local_options(list(SpaDES.project.updateRprofile = FALSE), .local_envir =
 
 # Source the functions
 lapply(list.files(file.path(testDirs$Rproj, "R"), full.names = TRUE), source)
+
+# Get needed packages
+packages = c("SpaDES.core", "SpaDES.project", "LandR", "data.table", "digest", "reproducible", "terra")
+init.test.packages(packages)
