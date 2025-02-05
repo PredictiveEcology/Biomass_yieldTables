@@ -110,6 +110,8 @@ doEvent.Biomass_yieldTables = function(sim, eventTime, eventType) {
                              .cacheExtra = mod$digest$outputHash, as.data.table(sim$yieldOutputs)[saved == TRUE])  # function already exists
       message("Converting to CBM Growth Increment ... This may take several minutes")
       cdObjs <- Cache(generateYieldTables, .cacheExtra = mod$digest$outputHash, cohortDataAll, pixelGroupRef = sim$pixelGroupRef, omitArgs = c("cohortData"))
+      # we don't need pixelGroupRef anymore
+      sim$pixelGroupRef <- NULL
       sim$CBM_AGB <- cdObjs$cds
       sim$CBM_speciesCodes <- cdObjs$cdSpeciesCodes
       rm(cdObjs, cohortDataAll)
