@@ -1,42 +1,19 @@
-
-
 if (!testthat::is_testing()){
   library(testthat)
   testthat::source_test_helpers(env = globalenv())
 }
 
-Require::Require("archive")
+# Source work in progress SpaDES module testing functions
+tempScript <- tempfile(fileext = ".R")
+download.file(
+  "https://raw.githubusercontent.com/suz-estella/SpaDES.core/refs/heads/suz-testthat/R/testthat.R",
+  tempScript, quiet = TRUE)
+source(tempScript)
 
-# Set teardown environment
-teardownEnv <- if (testthat::is_testing()) testthat::teardown_env() else parent.frame()
+# Set up testing global options
+SpaDEStestSetGlobalOptions()
 
-# List test directories
-testDirs <- .test_directories()
+# Set up testing directories
+spadesTestPaths <- SpaDEStestSetUpDirectories(copyModule = FALSE)
 
-# Create temporary directories
-for (d in testDirs$temp) dir.create(d)
-withr::defer({
-  unlink(testDirs$temp$root, recursive = TRUE)
-  if (file.exists(testDirs$temp$root)) warning(
-    "Temporary test directory could not be removed: ", testDirs$temp$root, call. = F)
-}, envir = teardownEnv, priority = "last")
 
-# Copy module to temporary location
-## This will hopefully be handled by testthat if a DESCRIPTION file is added.
-.test_copyModule(testDirs$Rproj, testDirs$temp$modules)
-
-# Set reproducible options
-withr::local_options(list(
-  reproducible.verbose = -2,
-  reproducible.cachePath = testDirs$temp$root # Example of caching location
-), .local_envir = teardownEnv)
-
-# Set SpaDES.project option to never update R profile
-withr::local_options(list(SpaDES.project.updateRprofile = FALSE), .local_envir = teardownEnv)
-
-# Source the functions
-lapply(list.files(file.path(testDirs$Rproj, "R"), full.names = TRUE), source)
-
-# Get needed packages
-packages = c("SpaDES.core", "SpaDES.project", "LandR", "data.table", "digest", "reproducible", "terra")
-init.test.packages(packages)

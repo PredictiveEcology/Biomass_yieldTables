@@ -1,7 +1,4 @@
 test_that("function pltfn works", {
-  packages = c("data.table", "ggplot2")
-  init.test.packages(packages)
-  
   #####
   # dummy inputs
   ngroup <- 3
@@ -32,7 +29,4 @@ test_that("function pltfn works", {
   # number of facets
   expect_equal(length(levels(ggplot2::ggplot_build(pltfn(AGB, sp, 2))$data[[1]]$PANEL)), 2)
   expect_equal(length(levels(ggplot2::ggplot_build(pltfn(AGB, sp, 10))$data[[1]]$PANEL)), ngroup)
-  
-  unload.test.packages(packages)
-  
 })

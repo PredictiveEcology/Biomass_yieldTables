@@ -1,5 +1,5 @@
 test_that("function runBiomass_core works", {
-
+  
   # This runs the function runBiomass_core with a simList created by 
   # the module biomass_borealDataPrep.
   # The study area is a ~10km^2 a located in Northeast BC
@@ -39,32 +39,31 @@ test_that("function runBiomass_core works", {
   # )
   
   updateFactorialOutputs = FALSE
-  
-  simOut <- SpaDES.core::loadSimList(file.path(test_path(), "fixtures", "smallSimOut.zip"),
-                                     projectPath = file.path(testDirs$temp$projects, "5-Biomass_borealDataPrep"))
+  simOut <- SpaDES.core::loadSimList(file.path(spadesTestPaths$testdata, "smallSimOut.zip"),
+                                     projectPath = spadesTestPaths$temp$projects)
   
   
   out <- runBiomass_core(moduleNameAndBranch ="PredictiveEcology/Biomass_core@development", 
                          paths = list(
-                           modulePath  = testDirs$temp$modules,
-                           inputPath   = testDirs$temp$inputs,
-                           outputPath = testDirs$temp$outputs
+                           modulePath  = spadesTestPaths$temp$modules,
+                           inputPath   = spadesTestPaths$temp$inputs,
+                           outputPath = spadesTestPaths$temp$outputs
                          ),
                          cohortData = simOut$cohortData,
                          species = simOut$species,
                          simEnv = envir(simOut))
   
   if(updateFactorialOutputs) {
-    cohortDataDir <- file.path(test_path(), "fixtures", "smallSimOut_cohortDataYield")
+    cohortDataDir <- file.path(spadesTestPaths$testdata, "smallSimOut_cohortDataYield")
     copyDirectory(
-      from = file.path(testDirs$temp$outputs, "cohortDataYield"),
+      from = file.path(spadesTestPaths$temp$outputs, "cohortDataYield"),
       to = cohortDataDir,
       overwrite = TRUE
     )
     factorialOutputs <- out$simOutputs
-    factorialOutputs$file <- file.path(cohortDataDir, list.files(cohortDataDir))
-    fwrite(factorialOutputs, file.path(test_path(), "fixtures", "factorialOutputs.csv"))
-    fwrite(out$pixelGroupRef, file.path(test_path(), "fixtures", "pixelGroupRef.csv"))
+    factorialOutputs$file <- file.path("testdata", "smallSimOut_cohortDataYield", list.files(cohortDataDir))
+    fwrite(factorialOutputs, file.path(spadesTestPaths$testdata, "factorialOutputs.csv"))
+    fwrite(out$pixelGroupRef, file.path(spadesTestPaths$testdata, "pixelGroupRef.csv"))
   }
   
   
@@ -81,5 +80,4 @@ test_that("function runBiomass_core works", {
   expect_true(all(out$simOutputs$saved))
   expect_true(nrow(out$simOutputs) == max(simOut$species$longevity)+1)
   
-  unload.test.packages(packages)
 })
