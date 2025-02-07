@@ -1,12 +1,10 @@
 test_that("function generateYieldTables works", {
-  packages = c("data.table")
-  init.test.packages(packages)
-  ngroup <- 3
+  ngroup <- 6
   age <- c(rep(0, 11), c(11:20))
   nsp <- 2
   
   cohortDataAll <- data.table::as.data.table(
-    expand.grid(pixelGroup = c(1:ngroup),
+    expand.grid(pixelGroup = c(1:(ngroup/2)),
                 age = age,
                 speciesCode = as.factor(c(1:nsp)))
   )
@@ -17,9 +15,8 @@ test_that("function generateYieldTables works", {
                               newPixelGroup = c(rep(1,2), rep(2,1), rep(3,3)))
   
   out <- generateYieldTables(cohortDataAll, pixelGroupRef)
-  
   # inspect out
-  expect_no_error(generateYieldTables(cohortDataAll))
+  expect_no_error(generateYieldTables(cohortDataAll, pixelGroupRef))
   expect_is(out, "list")
   expect_true(length(out) == 2)
   expect_true(all(names(out) == c("cds", "cdSpeciesCodes")))
@@ -35,5 +32,4 @@ test_that("function generateYieldTables works", {
   expect_false(any(duplicated(out$cdSpeciesCodes$cohort_id)))
   expect_equal(nrow(out$cdSpeciesCodes), nsp*ngroup)
   
-  unload.test.packages(packages)
 })

@@ -2,13 +2,10 @@ test_that("module runs with small example", {
   # packages = c("SpaDES.core", "SpaDES.project", "terra")
   # init.test.packages(packages)
   
-  # Restore paths on teardown
-  pathsOriginal <- list(wd = getwd(), libs = .libPaths())
-  withr::defer({
-    setwd(pathsOriginal$wd)
-    #.libPaths(pathsOriginal$libs)
-  })
-  
+  # Set project path
+  projectPath <- file.path(spadesTestPaths$temp$projects, "5-Biomass_yieldTables")
+  dir.create(projectPath)
+  withr::local_dir(projectPath)
   
   # This runs the module with a simList created by the modules biomass_borealDataPrep.
   
@@ -48,20 +45,20 @@ test_that("module runs with small example", {
   # )
   
   module <- "Biomass_yieldTables"
-  simOut <- SpaDES.core::loadSimList(file.path(test_path(), "fixtures", "smallSimOut.zip"),
-                                     projectPath = file.path(testDirs$temp$projects, "5-Biomass_borealDataPrep"))
+  simOut <- SpaDES.core::loadSimList(file.path(spadesTestPaths$testdata, "smallSimOut.zip"),
+                                     projectPath = spadesTestPaths$temp$projects)
   outs <- lapply(objects(simOut), function(x) simOut[[x]])
   names(outs) <- objects(simOut)
   
-  simInitInput <- .SpaDESwithCallingHandlers(
+  simInitInput <-  SpaDEStestMuffleOutput(
     SpaDES.project::setupProject(
       
       modules = module,
       paths   = list(
-        projectPath = file.path(testDirs$temp$projects, "5-Biomass_yieldTables"),
-        modulePath  = testDirs$temp$modules,
-        inputPath   = testDirs$temp$inputs,
-        outputPath = testDirs$temp$outputs
+        projectPath = projectPath,
+        modulePath  = spadesTestPaths$temp$modules,
+        inputPath   = spadesTestPaths$temp$inputs,
+        outputPath = spadesTestPaths$temp$outputs
       ),
       params = list(
         #.progress = list(type = graphical, interval = 1),
@@ -72,14 +69,14 @@ test_that("module runs with small example", {
     )
   )
   
-  simTestInit <- .SpaDESwithCallingHandlers(
+  simTestInit <-  SpaDEStestMuffleOutput(
     SpaDES.core::simInit2(simInitInput)
   )
   
   # is output a simList?
   expect_s4_class(simTestInit, "simList")
   
-  simTest <- .SpaDESwithCallingHandlers(
+  simTest <-  SpaDEStestMuffleOutput(
     SpaDES.core::spades(simTestInit, debug = FALSE)
   )
   
@@ -117,7 +114,5 @@ test_that("module runs with small example", {
   expect_is(simTest$CBM_speciesCodes$speciesCode, "factor")
   
   expect_true(anyDuplicated(simTest$CBM_speciesCodes$cohort_id) == 0)
-  
-  # unload.test.packages(packages)
   
 })
