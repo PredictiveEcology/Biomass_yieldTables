@@ -21,8 +21,8 @@ runBiomass_core <- function(moduleNameAndBranch, paths, cohortData, species, sim
   newPixelGroups <- updatePixelGroups(cohortDataForYield)
   cohortDataForYield <- newPixelGroups$cohortData
   rcl <- as.matrix(
-    cbind(from = newPixelGroups$pixelGroupRef$oldPixelGroup,
-          to = newPixelGroups$pixelGroupRef$newPixelGroup)
+    cbind(is = newPixelGroups$pixelGroupRef$oldPixelGroup,
+          becomes = newPixelGroups$pixelGroupRef$newPixelGroup)
   )
   
   # pick out the elements of the simList that are relevant for Caching -- not everything is

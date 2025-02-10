@@ -2,9 +2,6 @@
 
 ## SET UP ----
 
-# Source the functions
-lapply(list.files(file.path(spadesTestPaths$RProj, "R"), full.names = TRUE), source)
-
 # Get needed packages
 packages = c("SpaDES.core", "SpaDES.project", "LandR", "data.table", "digest", "reproducible", "terra", "ggplot2")
 if (!requireNamespace("Require", quietly = TRUE)) {

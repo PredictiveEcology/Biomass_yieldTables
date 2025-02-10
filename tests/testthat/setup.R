@@ -16,4 +16,5 @@ SpaDEStestSetGlobalOptions()
 # Set up testing directories
 spadesTestPaths <- SpaDEStestSetUpDirectories(copyModule = FALSE)
 
-
+# Source the functions
+lapply(list.files(file.path(spadesTestPaths$RProj, "R"), full.names = TRUE), source)
