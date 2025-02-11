@@ -88,12 +88,12 @@ doEvent.Biomass_yieldTables = function(sim, eventTime, eventType) {
       if (!is.null(Par$moduleNameAndBranch)) {
         mod$paths$modulePath <- file.path(modulePath(sim), currentModule(sim), "submodules")
       }
-      sim <- scheduleEvent(sim, time(sim), "Biomass_yieldTables", "generateData",
-                           eventPriority = -1)
-      sim <- scheduleEvent(sim, time(sim), "Biomass_yieldTables", "generateYieldTables",
-                           eventPriority = -1)
-      sim <- scheduleEvent(sim, time(sim), "Biomass_yieldTables", "plotYieldTables",
-                           eventPriority = -1)
+      sim <- scheduleEvent(sim, start(sim), "Biomass_yieldTables", "generateData",
+                           eventPriority = 1)
+      sim <- scheduleEvent(sim, start(sim), "Biomass_yieldTables", "generateYieldTables",
+                           eventPriority = 2)
+      sim <- scheduleEvent(sim, start(sim), "Biomass_yieldTables", "plotYieldTables",
+                           eventPriority = 3)
       
     },
     generateData = {
