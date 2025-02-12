@@ -38,8 +38,10 @@ test_that("function runBiomass_core works", {
   #   sppNameVector = c("Abie_las", "Popu_tre")
   # )
   updateFactorialOutputs = FALSE
-  simOut <- SpaDES.core::loadSimList(file.path(spadesTestPaths$testdata, "smallSimOut.zip"),
-                                     projectPath = spadesTestPaths$temp$projects)
+  simOut <- suppressWarnings(
+    SpaDES.core::loadSimList(file.path(spadesTestPaths$testdata, "smallSimOut.zip"),
+                             projectPath = spadesTestPaths$temp$projects)
+  )
   
   out <- runBiomass_core(moduleNameAndBranch ="PredictiveEcology/Biomass_core@main", 
                          paths = list(

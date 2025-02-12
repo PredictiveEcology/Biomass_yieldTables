@@ -45,8 +45,10 @@ test_that("module runs with small example", {
   # )
   
   module <- "Biomass_yieldTables"
-  simOut <- SpaDES.core::loadSimList(file.path(spadesTestPaths$testdata, "smallSimOut.zip"),
+  simOut <- suppressWarnings(
+    SpaDES.core::loadSimList(file.path(spadesTestPaths$testdata, "smallSimOut.zip"),
                                      projectPath = spadesTestPaths$temp$projects)
+  )
   outs <- lapply(objects(simOut), function(x) simOut[[x]])
   names(outs) <- objects(simOut)
   
