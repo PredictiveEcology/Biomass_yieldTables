@@ -43,6 +43,7 @@ runBiomass_core <- function(moduleNameAndBranch, paths, cohortData, species, sim
   objectNames <- objectNames[sapply(objectNames, exists, envir = simEnv)]
   objects <- mget(objectNames, envir = simEnv)
   objects$cohortData <- cohortDataForYield
+  message("Reclassifying pixelGroups, may take a few minutes...")
   objects$pixelGroupMap <- terra::classify(objects$pixelGroupMap, rcl)
   opts <- options("LandR.assertions" = FALSE)
   on.exit(options(opts))

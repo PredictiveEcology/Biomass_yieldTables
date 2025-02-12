@@ -7,6 +7,7 @@ createYieldTables <- function(cohortData, pixelGroupRef) {
   }
   
   # Retrieve original pixelGroups
+  message("Retrieving original pixelGroups")
   cds <- merge(cds, pixelGroupRef, by.x = "pixelGroup", by.y = "newPixelGroup", allow.cartesian = TRUE)
   cds[, pixelGroup := NULL]
   setnames(cds, "oldPixelGroup", "pixelGroup")

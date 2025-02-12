@@ -101,6 +101,7 @@ doEvent.Biomass_yieldTables = function(sim, eventTime, eventType) {
 }
 
 generateData <- function(sim) {
+  message("Running simulations for all PixelGroups")
   biomassCoresOuts <-  Cache(runBiomass_core, moduleNameAndBranch = Par$moduleNameAndBranch,
                              paths = mod$paths, cohortData = sim$cohortData,
                              species = sim$species, simEnv = envir(sim))
@@ -111,7 +112,7 @@ generateData <- function(sim) {
 }
 
 generateYieldTables <- function(sim) {
-  message("Loading in cohortData files")
+  message("Simulation done! Loading in cohortData files")
   cohortDataAll <- Cache(ReadExperimentFiles, omitArgs = "factorialOutputs",
                          .cacheExtra = mod$digest$outputHash, as.data.table(sim$yieldOutputs)[saved == TRUE])  # function already exists
   message("Converting to CBM Growth Increment ... This may take several minutes")
@@ -124,11 +125,13 @@ generateYieldTables <- function(sim) {
 }
 
 plotYieldTables <- function(sim) {
+  fname = paste("Yield Curves from", Par$numPlots,
+                "random plots -", gsub(":", "_", sim$._startClockTime))
+  message("Yield tables created. Plot saved in ", fname)
   Plots(AGB = sim$CBM_AGB, sp = sim$CBM_speciesCodes, usePlot = FALSE, fn = pltfn,
         numPlots = Par$numPlots,
         ggsaveArgs = list(width = 10, height = 7),
-        filename = paste("Yield Curves from", Par$numPlots,
-                         "random plots -", gsub(":", "_", sim$._startClockTime)))
+        filename = fname)
   return(sim)
 }
 
