@@ -88,45 +88,50 @@ doEvent.Biomass_yieldTables = function(sim, eventTime, eventType) {
       if (!is.null(Par$moduleNameAndBranch)) {
         mod$paths$modulePath <- file.path(modulePath(sim), currentModule(sim), "submodules")
       }
-      sim <- scheduleEvent(sim, start(sim), "Biomass_yieldTables", "generateData",
-                           eventPriority = 1)
-      sim <- scheduleEvent(sim, start(sim), "Biomass_yieldTables", "generateYieldTables",
-                           eventPriority = 2)
-      sim <- scheduleEvent(sim, start(sim), "Biomass_yieldTables", "plotYieldTables",
-                           eventPriority = 3)
+      sim <- generateData(sim)
       
-    },
-    generateData = {
-      biomassCoresOuts <-  Cache(runBiomass_core, moduleNameAndBranch = Par$moduleNameAndBranch,
-                                 paths = mod$paths, cohortData = sim$cohortData,
-                                 species = sim$species, simEnv = envir(sim))
-      sim$yieldOutputs <- biomassCoresOuts$simOutputs
-      mod$pixelGroupRef <- biomassCoresOuts$pixelGroupRef
-      mod$digest <- biomassCoresOuts$digest
-    },
-    generateYieldTables = {
-      message("Loading in cohortData files")
-      cohortDataAll <- Cache(ReadExperimentFiles, omitArgs = "factorialOutputs",
-                             .cacheExtra = mod$digest$outputHash, as.data.table(sim$yieldOutputs)[saved == TRUE])  # function already exists
-      message("Converting to CBM Growth Increment ... This may take several minutes")
-      cdObjs <- Cache(generateYieldTables, .cacheExtra = mod$digest$outputHash, cohortDataAll, pixelGroupRef = mod$pixelGroupRef, omitArgs = c("cohortData"))
-      sim$CBM_AGB <- cdObjs$cds
-      sim$CBM_speciesCodes <- cdObjs$cdSpeciesCodes
-      rm(cdObjs, cohortDataAll)
-      gc()
-    },
-    plotYieldTables = {
-      Plots(AGB = sim$CBM_AGB, sp = sim$CBM_speciesCodes, usePlot = FALSE, fn = pltfn,
-            numPlots = Par$numPlots,
-            ggsaveArgs = list(width = 10, height = 7),
-            filename = paste("Yield Curves from", Par$numPlots,
-                             "random plots -", gsub(":", "_", sim$._startClockTime)))
+      sim <- generateYieldTables(sim)
+      
+      sim <- plotYieldTables
     },
     warning(paste("Undefined event type: \'", current(sim)[1, "eventType", with = FALSE],
                   "\' in module \'", current(sim)[1, "moduleName", with = FALSE], "\'", sep = ""))
   )
   return(invisible(sim))
 }
+
+generateData <- function(sim) {
+  biomassCoresOuts <-  Cache(runBiomass_core, moduleNameAndBranch = Par$moduleNameAndBranch,
+                             paths = mod$paths, cohortData = sim$cohortData,
+                             species = sim$species, simEnv = envir(sim))
+  sim$yieldOutputs <- biomassCoresOuts$simOutputs
+  mod$pixelGroupRef <- biomassCoresOuts$pixelGroupRef
+  mod$digest <- biomassCoresOuts$digest
+  return(sim)
+}
+
+generateYieldTables <- function(sim) {
+  message("Loading in cohortData files")
+  cohortDataAll <- Cache(ReadExperimentFiles, omitArgs = "factorialOutputs",
+                         .cacheExtra = mod$digest$outputHash, as.data.table(sim$yieldOutputs)[saved == TRUE])  # function already exists
+  message("Converting to CBM Growth Increment ... This may take several minutes")
+  cdObjs <- Cache(generateYieldTables, .cacheExtra = mod$digest$outputHash, cohortDataAll, pixelGroupRef = mod$pixelGroupRef, omitArgs = c("cohortData"))
+  sim$CBM_AGB <- cdObjs$cds
+  sim$CBM_speciesCodes <- cdObjs$cdSpeciesCodes
+  rm(cdObjs, cohortDataAll)
+  gc()
+  return(sim)
+}
+
+plotYieldTables <- function(sim) {
+  Plots(AGB = sim$CBM_AGB, sp = sim$CBM_speciesCodes, usePlot = FALSE, fn = pltfn,
+        numPlots = Par$numPlots,
+        ggsaveArgs = list(width = 10, height = 7),
+        filename = paste("Yield Curves from", Par$numPlots,
+                         "random plots -", gsub(":", "_", sim$._startClockTime)))
+  return(sim)
+}
+
 
 ## .inputObjects ------------------------------------------------------------------------------
 .inputObjects <- function(sim) {
