@@ -88,11 +88,11 @@ doEvent.Biomass_yieldTables = function(sim, eventTime, eventType) {
       if (!is.null(Par$moduleNameAndBranch)) {
         mod$paths$modulePath <- file.path(modulePath(sim), currentModule(sim), "submodules")
       }
-      sim <- generateData(sim)
+      sim <- GenerateData(sim)
       
-      sim <- generateYieldTables(sim)
+      sim <- GenerateYieldTables(sim)
       
-      sim <- plotYieldTables(sim)
+      sim <- PlotYieldTables(sim)
     },
     warning(paste("Undefined event type: \'", current(sim)[1, "eventType", with = FALSE],
                   "\' in module \'", current(sim)[1, "moduleName", with = FALSE], "\'", sep = ""))
@@ -100,7 +100,7 @@ doEvent.Biomass_yieldTables = function(sim, eventTime, eventType) {
   return(invisible(sim))
 }
 
-generateData <- function(sim) {
+GenerateData <- function(sim) {
   message("Running simulations for all PixelGroups")
   biomassCoresOuts <-  Cache(runBiomass_core, moduleNameAndBranch = Par$moduleNameAndBranch,
                              paths = mod$paths, cohortData = sim$cohortData,
@@ -111,12 +111,12 @@ generateData <- function(sim) {
   return(sim)
 }
 
-generateYieldTables <- function(sim) {
+GenerateYieldTables <- function(sim) {
   message("Simulation done! Loading in cohortData files")
   cohortDataAll <- Cache(ReadExperimentFiles, omitArgs = "factorialOutputs",
                          .cacheExtra = mod$digest$outputHash, as.data.table(sim$yieldOutputs)[saved == TRUE])  # function already exists
   message("Converting to CBM Growth Increment ... This may take several minutes")
-  cdObjs <- Cache(createYieldTables, .cacheExtra = mod$digest$outputHash, cohortDataAll, pixelGroupRef = mod$pixelGroupRef, omitArgs = c("cohortData"))
+  cdObjs <- Cache(generateYieldTables, .cacheExtra = mod$digest$outputHash, cohortDataAll, pixelGroupRef = mod$pixelGroupRef, omitArgs = c("cohortData"))
   sim$CBM_AGB <- cdObjs$cds
   sim$CBM_speciesCodes <- cdObjs$cdSpeciesCodes
   rm(cdObjs, cohortDataAll)
@@ -124,10 +124,9 @@ generateYieldTables <- function(sim) {
   return(sim)
 }
 
-plotYieldTables <- function(sim) {
+PlotYieldTables <- function(sim) {
   fname = paste("Yield Curves from", Par$numPlots,
                 "random plots -", gsub(":", "_", sim$._startClockTime))
-  message("Yield tables created. Plot saved in ", fname)
   Plots(AGB = sim$CBM_AGB, sp = sim$CBM_speciesCodes, usePlot = FALSE, fn = pltfn,
         numPlots = Par$numPlots,
         ggsaveArgs = list(width = 10, height = 7),

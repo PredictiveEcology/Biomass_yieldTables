@@ -52,7 +52,6 @@ test_that("module runs with small example", {
   
   simInitInput <-  SpaDEStestMuffleOutput(
     SpaDES.project::setupProject(
-      
       modules = module,
       paths   = list(
         projectPath = projectPath,
@@ -100,6 +99,12 @@ test_that("module runs with small example", {
   expect_type(simTest$CBM_AGB$cohort_id, "integer")
   
   expect_true(anyDuplicated(simTest$CBM_AGB[,c("age", "cohort_id")]) == 0)
+  
+  expect_true(nrow(simTest$CBM_AGB) > 0)
+  expect_true(max(simTest$CBM_AGB$age) == max(simTest$species$longevity))
+  expect_true(all(simTest$CBM_AGB$B[simTest$CBM_AGB$age == 0] == 1))
+  expect_true(all(simTest$CBM_AGB$B >= 1))
+  expect_true(all(simTest$CBM_AGB$age >= 0))
   
   # check output CBM_speciesCodes
   expect_true(!is.null(simTest$CBM_speciesCodes))
