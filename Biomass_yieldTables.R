@@ -22,7 +22,7 @@ defineModule(sim, list(
                     "Should caching of events or module be used?"),
     defineParameter(".plots", "character", "screen", NA, NA,
                     "Used by Plots function, which can be optionally used here"),
-    defineParameter("numPlots", "integer", 40, NA, NA,
+    defineParameter("numPlots", "integer", 40L, NA, NA,
                     "When plotting the yield curves, this is how many unique pixel groups will ",
                     "be randomly selected and plotted"),
     defineParameter("moduleNameAndBranch", "character", "PredictiveEcology/Biomass_core@development (>= 1.3.9)", NA, NA,
