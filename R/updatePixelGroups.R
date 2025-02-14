@@ -9,10 +9,10 @@ updatePixelGroups <- function(
                            .SDcols = pixelGroupDefinitionCols]
   
   # Assign new pixelGroups based on (ecoregionGroup, pixelGroupSignature)
-  new_groups[, newPixelGroup := .GRP, by = .(ecoregionGroup, pixelGroupSignature)]
+  new_groups[, ycids := .GRP, by = .(ecoregionGroup, pixelGroupSignature)]
   
   # Keep only the mapping columns
-  new_groups <- new_groups[, .(oldPixelGroup = pixelGroup, newPixelGroup)]
+  new_groups <- new_groups[, .(pixelGroup, ycids)]
   
   # Merge back to original cohortData
   out <- merge(dt, new_groups, by.x = "pixelGroup", by.y = "oldPixelGroup")

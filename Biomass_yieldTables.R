@@ -70,10 +70,12 @@ defineModule(sim, list(
                   "This one will have column names of ycids, age, cohort_id, B. The last ",
                   "column represent aboveground biomass of that cohort_id at that age. Note, these ",
                   "will not be strictly increasing as the species approaches its longevity. ",
-                  "To see what these three species map onto in real species, see yieldT_speciesCodes"),
-    createsOutput(objectName = "yieldT_speciesCodes", objectClass = "data.table",
-                  "An object with 3 columns: pixelGroup, speciesCode, and Sp. This provides the species ",
-                  "mapping for the CBM_AGB object which only specifies Sp1, Sp2, and Sp3")
+                  "To see what these three species map onto in real species, see yieldSpeciesCodes"),
+    createsOutput(objectName = "yieldSpeciesCodes", objectClass = "data.table",
+                  "An object with 3 columns: ycids, cohort_id, and speciesCode. This provides the species ",
+                  "mapping for the yieldTables object"),
+    createOutput(objectName = "yieldPixelGroup", objectClass = "data.table",
+                 "A reference table linking pixelGroups to ycids in yieldTables.")
   )
 ))
 
@@ -104,7 +106,7 @@ GenerateData <- function(sim) {
                              paths = mod$paths, cohortData = sim$cohortData,
                              species = sim$species, simEnv = envir(sim))
   sim$yieldOutputs <- biomassCoresOuts$simOutputs
-  mod$pixelGroupRef <- biomassCoresOuts$pixelGroupRef
+  sim$yieldPixelGroup <- biomassCoresOuts$pixelGroupRef
   mod$digest <- biomassCoresOuts$digest
   return(sim)
 }
@@ -114,9 +116,9 @@ GenerateYieldTables <- function(sim) {
   cohortDataAll <- Cache(ReadExperimentFiles, omitArgs = "factorialOutputs",
                          .cacheExtra = mod$digest$outputHash, as.data.table(sim$yieldOutputs)[saved == TRUE])  # function already exists
   message("Converting to CBM Growth Increment ... This may take several minutes")
-  cdObjs <- Cache(generateYieldTables, .cacheExtra = mod$digest$outputHash, cohortDataAll, pixelGroupRef = mod$pixelGroupRef, omitArgs = c("cohortData"))
+  cdObjs <- Cache(generateYieldTables, .cacheExtra = mod$digest$outputHash, cohortDataAll, omitArgs = c("cohortData"))
   sim$yieldTables <- cdObjs$cds
-  sim$yieldT_speciesCodes <- cdObjs$cdSpeciesCodes
+  sim$yieldSpeciesCodes <- cdObjs$cdSpeciesCodes
   rm(cdObjs, cohortDataAll)
   gc()
   return(sim)
