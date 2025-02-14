@@ -65,15 +65,13 @@ defineModule(sim, list(
                   desc = "A data.frame showing the cohortData files that were created during this ",
                   "module. Normally, these can be deleted as they are re-read within this module ",
                   "and converted into CBM_AGB and CBM_speciesCodes."),
-    createsOutput(objectName = "CBM_AGB", objectClass = "data.table",
+    createsOutput(objectName = "yieldTables", objectClass = "data.table",
                   "A large object intended to supply the eventual requirements for a CBM growth increment object. ",
-                  "This one will have column names of pixelGroup, age, Sp1, Sp2, Sp3. The last three ",
-                  "columns represent aboveground biomass of that species at that age. Note, these ",
-                  "will not be strictly increasing as the species approaches its longevity. Sp1 ",
-                  "will always be the species in the pixelGroup with the highest maximum biomass; Sp2 is ",
-                  "second highest; Sp3 is 3rd highest. To see what these three species map onto in ",
-                  "real species, see CBM_speciesCodes"),
-    createsOutput(objectName = "CBM_speciesCodes", objectClass = "data.table",
+                  "This one will have column names of ycids, age, cohort_id, B. The last ",
+                  "column represent aboveground biomass of that cohort_id at that age. Note, these ",
+                  "will not be strictly increasing as the species approaches its longevity. ",
+                  "To see what these three species map onto in real species, see yieldT_speciesCodes"),
+    createsOutput(objectName = "yieldT_speciesCodes", objectClass = "data.table",
                   "An object with 3 columns: pixelGroup, speciesCode, and Sp. This provides the species ",
                   "mapping for the CBM_AGB object which only specifies Sp1, Sp2, and Sp3")
   )
@@ -117,8 +115,8 @@ GenerateYieldTables <- function(sim) {
                          .cacheExtra = mod$digest$outputHash, as.data.table(sim$yieldOutputs)[saved == TRUE])  # function already exists
   message("Converting to CBM Growth Increment ... This may take several minutes")
   cdObjs <- Cache(generateYieldTables, .cacheExtra = mod$digest$outputHash, cohortDataAll, pixelGroupRef = mod$pixelGroupRef, omitArgs = c("cohortData"))
-  sim$CBM_AGB <- cdObjs$cds
-  sim$CBM_speciesCodes <- cdObjs$cdSpeciesCodes
+  sim$yieldTables <- cdObjs$cds
+  sim$yieldT_speciesCodes <- cdObjs$cdSpeciesCodes
   rm(cdObjs, cohortDataAll)
   gc()
   return(sim)
@@ -127,7 +125,7 @@ GenerateYieldTables <- function(sim) {
 PlotYieldTables <- function(sim) {
   fname = paste("Yield Curves from", Par$numPlots,
                 "random plots -", gsub(":", "_", sim$._startClockTime))
-  Plots(AGB = sim$CBM_AGB, sp = sim$CBM_speciesCodes, usePlot = FALSE, fn = pltfn,
+  Plots(AGB = sim$yieldTables, sp = sim$yieldT_speciesCodes, usePlot = FALSE, fn = pltfn,
         numPlots = Par$numPlots,
         ggsaveArgs = list(width = 10, height = 7),
         filename = fname)
