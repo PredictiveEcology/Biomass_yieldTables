@@ -22,7 +22,7 @@ defineModule(sim, list(
                     "Should caching of events or module be used?"),
     defineParameter(".plots", "character", "screen", NA, NA,
                     "Used by Plots function, which can be optionally used here"),
-    defineParameter("numPlots", "integer", 40, NA, NA,
+    defineParameter("numPlots", "integer", 40L, NA, NA,
                     "When plotting the yield curves, this is how many unique pixel groups will ",
                     "be randomly selected and plotted"),
     defineParameter("moduleNameAndBranch", "character", "PredictiveEcology/Biomass_core@development (>= 1.3.9)", NA, NA,
@@ -88,47 +88,52 @@ doEvent.Biomass_yieldTables = function(sim, eventTime, eventType) {
       if (!is.null(Par$moduleNameAndBranch)) {
         mod$paths$modulePath <- file.path(modulePath(sim), currentModule(sim), "submodules")
       }
-      sim <- scheduleEvent(sim, time(sim), "Biomass_yieldTables", "generateData",
-                           eventPriority = -1)
-      sim <- scheduleEvent(sim, time(sim), "Biomass_yieldTables", "generateYieldTables",
-                           eventPriority = -1)
-      sim <- scheduleEvent(sim, time(sim), "Biomass_yieldTables", "plotYieldTables",
-                           eventPriority = -1)
+      sim <- GenerateData(sim)
       
-    },
-    generateData = {
-      biomassCoresOuts <-  Cache(runBiomass_core, moduleNameAndBranch = Par$moduleNameAndBranch,
-                                 paths = mod$paths, cohortData = sim$cohortData,
-                                 species = sim$species, simEnv = envir(sim))
-      sim$yieldOutputs <- biomassCoresOuts$simOutputs
-      mod$pixelGroupRef <- biomassCoresOuts$pixelGroupRef
-      mod$digest <- biomassCoresOuts$digest
-    },
-    generateYieldTables = {
-      message("Loading in cohortData files")
-      cohortDataAll <- Cache(ReadExperimentFiles, omitArgs = "factorialOutputs",
-                             .cacheExtra = mod$digest$outputHash, as.data.table(sim$yieldOutputs)[saved == TRUE])  # function already exists
-      message("Converting to CBM Growth Increment ... This may take several minutes")
-      cdObjs <- Cache(generateYieldTables, .cacheExtra = mod$digest$outputHash, cohortDataAll, pixelGroupRef = mod$pixelGroupRef, omitArgs = c("cohortData"))
-      # we don't need pixelGroupRef anymore
-      sim$pixelGroupRef <- NULL
-      sim$CBM_AGB <- cdObjs$cds
-      sim$CBM_speciesCodes <- cdObjs$cdSpeciesCodes
-      rm(cdObjs, cohortDataAll)
-      gc()
-    },
-    plotYieldTables = {
-      Plots(AGB = sim$CBM_AGB, sp = sim$CBM_speciesCodes, usePlot = FALSE, fn = pltfn,
-            numPlots = Par$numPlots,
-            ggsaveArgs = list(width = 10, height = 7),
-            filename = paste("Yield Curves from", Par$numPlots,
-                             "random plots -", gsub(":", "_", sim$._startClockTime)))
+      sim <- GenerateYieldTables(sim)
+      
+      sim <- PlotYieldTables(sim)
     },
     warning(paste("Undefined event type: \'", current(sim)[1, "eventType", with = FALSE],
                   "\' in module \'", current(sim)[1, "moduleName", with = FALSE], "\'", sep = ""))
   )
   return(invisible(sim))
 }
+
+GenerateData <- function(sim) {
+  message("Running simulations for all PixelGroups")
+  biomassCoresOuts <-  Cache(runBiomass_core, moduleNameAndBranch = Par$moduleNameAndBranch,
+                             paths = mod$paths, cohortData = sim$cohortData,
+                             species = sim$species, simEnv = envir(sim))
+  sim$yieldOutputs <- biomassCoresOuts$simOutputs
+  mod$pixelGroupRef <- biomassCoresOuts$pixelGroupRef
+  mod$digest <- biomassCoresOuts$digest
+  return(sim)
+}
+
+GenerateYieldTables <- function(sim) {
+  message("Simulation done! Loading in cohortData files")
+  cohortDataAll <- Cache(ReadExperimentFiles, omitArgs = "factorialOutputs",
+                         .cacheExtra = mod$digest$outputHash, as.data.table(sim$yieldOutputs)[saved == TRUE])  # function already exists
+  message("Converting to CBM Growth Increment ... This may take several minutes")
+  cdObjs <- Cache(generateYieldTables, .cacheExtra = mod$digest$outputHash, cohortDataAll, pixelGroupRef = mod$pixelGroupRef, omitArgs = c("cohortData"))
+  sim$CBM_AGB <- cdObjs$cds
+  sim$CBM_speciesCodes <- cdObjs$cdSpeciesCodes
+  rm(cdObjs, cohortDataAll)
+  gc()
+  return(sim)
+}
+
+PlotYieldTables <- function(sim) {
+  fname = paste("Yield Curves from", Par$numPlots,
+                "random plots -", gsub(":", "_", sim$._startClockTime))
+  Plots(AGB = sim$CBM_AGB, sp = sim$CBM_speciesCodes, usePlot = FALSE, fn = pltfn,
+        numPlots = Par$numPlots,
+        ggsaveArgs = list(width = 10, height = 7),
+        filename = fname)
+  return(sim)
+}
+
 
 ## .inputObjects ------------------------------------------------------------------------------
 .inputObjects <- function(sim) {
