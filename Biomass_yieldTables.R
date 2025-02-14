@@ -74,7 +74,7 @@ defineModule(sim, list(
     createsOutput(objectName = "yieldSpeciesCodes", objectClass = "data.table",
                   "An object with 3 columns: pixelGroupYield, cohort_id, and speciesCode. This provides the species ",
                   "mapping for the yieldTables object"),
-    createOutput(objectName = "yieldPixelGroupMap", objectClass = "spatRaster",
+    createsOutput(objectName = "yieldPixelGroupMap", objectClass = "spatRaster",
                  "A raster mapping pixelGroupYield.")
   )
 ))
