@@ -83,43 +83,42 @@ test_that("module runs with small example", {
   
   # is output a simList?
   expect_s4_class(simTest, "simList")
-  
   # does output have your module in it
   expect_true(any(unlist(modules(simTest)) %in% module))
   
-  # check output CBM_AGB
-  expect_true(!is.null(simTest$CBM_AGB))
-  expect_true(inherits(simTest$CBM_AGB, "data.table"))
+  # check output yieldTables
+  expect_true(!is.null(simTest$yieldTables))
+  expect_true(inherits(simTest$yieldTables, "data.table"))
   
-  expected_colnames <- c("pixelGroup", "age", "B", "cohort_id")
-  expect_true(all(names(simTest$CBM_AGB) %in% expected_colnames))
-  expect_true(all(expected_colnames %in% names(simTest$CBM_AGB)))
+  expected_colnames <- c("yieldPixelGroup", "age", "B", "cohort_id")
+  expect_true(all(names(simTest$yieldTables) %in% expected_colnames))
+  expect_true(all(expected_colnames %in% names(simTest$yieldTables)))
   
-  expect_type(simTest$CBM_AGB$pixelGroup, "integer")
-  expect_type(simTest$CBM_AGB$age, "integer")
-  expect_type(simTest$CBM_AGB$B, "integer")
-  expect_type(simTest$CBM_AGB$cohort_id, "integer")
+  expect_type(simTest$yieldTables$yieldPixelGroup, "integer")
+  expect_type(simTest$yieldTables$age, "integer")
+  expect_type(simTest$yieldTables$B, "integer")
+  expect_type(simTest$yieldTables$cohort_id, "integer")
   
-  expect_true(anyDuplicated(simTest$CBM_AGB[,c("age", "cohort_id")]) == 0)
+  expect_true(anyDuplicated(simTest$yieldTables[,c("age", "cohort_id")]) == 0)
   
-  expect_true(nrow(simTest$CBM_AGB) > 0)
-  expect_true(max(simTest$CBM_AGB$age) == max(simTest$species$longevity))
-  expect_true(all(simTest$CBM_AGB$B[simTest$CBM_AGB$age == 0] == 1))
-  expect_true(all(simTest$CBM_AGB$B >= 1))
-  expect_true(all(simTest$CBM_AGB$age >= 0))
+  expect_true(nrow(simTest$yieldTables) > 0)
+  expect_true(max(simTest$yieldTables$age) == max(simTest$species$longevity))
+  expect_true(all(simTest$yieldTables$B[simTest$CBM_AGB$age == 0] == 1))
+  expect_true(all(simTest$yieldTables$B >= 1))
+  expect_true(all(simTest$yieldTables$age >= 0))
   
   # check output CBM_speciesCodes
-  expect_true(!is.null(simTest$CBM_speciesCodes))
-  expect_true(inherits(simTest$CBM_speciesCodes, "data.table"))
+  expect_true(!is.null(simTest$yieldSpeciesCodes))
+  expect_true(inherits(simTest$yieldSpeciesCodes, "data.table"))
   
-  expected_colnames <- c("pixelGroup", "cohort_id", "speciesCode")
-  expect_true(all(names(simTest$CBM_speciesCodes) %in% expected_colnames))
-  expect_true(all(expected_colnames %in% names(simTest$CBM_speciesCodes)))
+  expected_colnames <- c("yieldPixelGroup", "cohort_id", "speciesCode")
+  expect_true(all(names(simTest$yieldSpeciesCodes) %in% expected_colnames))
+  expect_true(all(expected_colnames %in% names(simTest$yieldSpeciesCodes)))
   
-  expect_type(simTest$CBM_speciesCodes$pixelGroup, "integer")
-  expect_type(simTest$CBM_speciesCodes$cohort_id, "integer")
-  expect_is(simTest$CBM_speciesCodes$speciesCode, "factor")
+  expect_type(simTest$yieldSpeciesCodes$yieldPixelGroup, "integer")
+  expect_type(simTest$yieldSpeciesCodes$cohort_id, "integer")
+  expect_is(simTest$yieldSpeciesCodes$speciesCode, "factor")
   
-  expect_true(anyDuplicated(simTest$CBM_speciesCodes$cohort_id) == 0)
+  expect_true(anyDuplicated(simTest$yieldSpeciesCodes$cohort_id) == 0)
   
 })

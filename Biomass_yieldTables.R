@@ -115,6 +115,7 @@ GenerateYieldTables <- function(sim) {
   message("Simulation done! Loading in cohortData files")
   cohortDataAll <- Cache(ReadExperimentFiles, omitArgs = "factorialOutputs",
                          .cacheExtra = mod$digest$outputHash, as.data.table(sim$yieldOutputs)[saved == TRUE])  # function already exists
+  setnames(cohortDataAll, "pixelGroup", "yieldPixelGroup")
   message("Converting to CBM Growth Increment ... This may take several minutes")
   cdObjs <- Cache(generateYieldTables, .cacheExtra = mod$digest$outputHash, cohortDataAll, omitArgs = c("cohortData"))
   sim$yieldTables <- cdObjs$cds
@@ -127,7 +128,7 @@ GenerateYieldTables <- function(sim) {
 PlotYieldTables <- function(sim) {
   fname = paste("Yield Curves from", Par$numPlots,
                 "random plots -", gsub(":", "_", sim$._startClockTime))
-  Plots(AGB = sim$yieldTables, sp = sim$yieldT_speciesCodes, usePlot = FALSE, fn = pltfn,
+  Plots(AGB = sim$yieldTables, sp = sim$yieldSpeciesCodes, usePlot = FALSE, fn = pltfn,
         numPlots = Par$numPlots,
         ggsaveArgs = list(width = 10, height = 7),
         filename = fname)

@@ -5,15 +5,15 @@ test_that("function pltfn works", {
   nage <- 5
   nsp <- 2
   AGB <- data.table::as.data.table(
-    expand.grid(pixelGroup = c(1:ngroup),
+    expand.grid(yieldPixelGroup = c(1:ngroup),
                 age = c(1:nage),
                 speciesCode = as.factor(c(1:nsp)))
   )
   AGB$B <- AGB$age
   # Add cohort_id. One cohort_id per pixelGroup x species
-  AGB[, cohort_id:=.GRP, by = c("pixelGroup", "speciesCode")]
+  AGB[, cohort_id:=.GRP, by = c("yieldPixelGroup", "speciesCode")]
   # Create reference table
-  sp <- unique(AGB[, .(cohort_id, pixelGroup, speciesCode)])
+  sp <- unique(AGB[, .(cohort_id, yieldPixelGroup, speciesCode)])
   # Remove columns
   AGB[, speciesCode := NULL]
   #####

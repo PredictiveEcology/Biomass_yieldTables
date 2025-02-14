@@ -16,12 +16,11 @@ updatePixelGroups <- function(
   
   # Merge back to original cohortData
   out <- merge(dt, new_groups, by = "pixelGroup")
-  
+
   # Remove old pixelGroup and rename newPixelGroup
   out[, pixelGroup := NULL]
-  setnames(out, "newPixelGroup", "pixelGroup")
+  setnames(out, "pixelGroupYield", "pixelGroup")
   out <- unique(out[, .(speciesCode, ecoregionGroup, age, B, pixelGroup)], by = c("pixelGroup", "speciesCode", "age", "B"))
-  
   if (returnRefTable) {
     return(list(cohortData = out, pixelGroupRef = new_groups))
   } else {
