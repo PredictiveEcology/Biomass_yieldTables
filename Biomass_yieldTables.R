@@ -8,8 +8,11 @@ defineModule(sim, list(
   name = "Biomass_yieldTables",
   description = "",
   keywords = "",
-  authors = structure(list(list(given = c("Eliot"), family = "McIntire", role = c("aut", "cre"),
-                                email = "eliot.mcintire@nrcan-rncan.gc.ca", comment = NULL)), class = "person"),
+  authors = c(
+    person("Celine", "Boisvenue", email = "cboivenue@gmail.com", role = c("aut")),
+    person("Dominique", "Caron", email = "dominique.caron@nrcan-rncan.gc.ca", role = c("aut")),
+    person("Eliot", "McIntire", email = "eliot.mcintire@nrcan-rncan.gc.ca", role = c("aut", "cre"))
+  ),
   childModules = character(0),
   version = list(Biomass_yieldTables = "0.0.8"),
   timeframe = as.POSIXlt(c(NA, NA)),
