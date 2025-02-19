@@ -21,6 +21,9 @@ updatePixelGroups <- function(
   out[, pixelGroup := NULL]
   setnames(out, "pixelGroupYield", "pixelGroup")
   out <- unique(out[, .(speciesCode, ecoregionGroup, age, B, pixelGroup)], by = c("pixelGroup", "speciesCode", "age", "B"))
+  
+  out <- setorder(out, ecoregionGroup, pixelGroup, speciesCode, age) |>
+    setcolorder(c("ecoregionGroup", "pixelGroup", "speciesCode", "age", "B"))
   if (returnRefTable) {
     return(list(cohortData = out, pixelGroupRef = new_groups))
   } else {

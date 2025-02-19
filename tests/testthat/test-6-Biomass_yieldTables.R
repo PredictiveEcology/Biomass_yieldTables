@@ -1,6 +1,4 @@
 test_that("module runs with small example", {
-  # packages = c("SpaDES.core", "SpaDES.project", "terra")
-  # init.test.packages(packages)
   
   # Set project path
   projectPath <- file.path(spadesTestPaths$temp$projects, "5-Biomass_yieldTables")
