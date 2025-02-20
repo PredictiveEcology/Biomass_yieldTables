@@ -9,19 +9,21 @@ updatePixelGroups <- function(
                            .SDcols = pixelGroupDefinitionCols]
   
   # Assign new pixelGroups based on (ecoregionGroup, pixelGroupSignature)
-  new_groups[, newPixelGroup := .GRP, by = .(ecoregionGroup, pixelGroupSignature)]
+  new_groups[, pixelGroupYield := .GRP, by = .(ecoregionGroup, pixelGroupSignature)]
   
   # Keep only the mapping columns
-  new_groups <- new_groups[, .(oldPixelGroup = pixelGroup, newPixelGroup)]
+  new_groups <- new_groups[, .(pixelGroup, pixelGroupYield)]
   
   # Merge back to original cohortData
-  out <- merge(dt, new_groups, by.x = "pixelGroup", by.y = "oldPixelGroup")
-  
+  out <- merge(dt, new_groups, by = "pixelGroup")
+
   # Remove old pixelGroup and rename newPixelGroup
   out[, pixelGroup := NULL]
-  setnames(out, "newPixelGroup", "pixelGroup")
+  setnames(out, "pixelGroupYield", "pixelGroup")
   out <- unique(out[, .(speciesCode, ecoregionGroup, age, B, pixelGroup)], by = c("pixelGroup", "speciesCode", "age", "B"))
   
+  out <- setorder(out, ecoregionGroup, pixelGroup, speciesCode, age) |>
+    setcolorder(c("ecoregionGroup", "pixelGroup", "speciesCode", "age", "B"))
   if (returnRefTable) {
     return(list(cohortData = out, pixelGroupRef = new_groups))
   } else {

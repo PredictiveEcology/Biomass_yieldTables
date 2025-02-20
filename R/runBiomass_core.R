@@ -21,8 +21,8 @@ runBiomass_core <- function(moduleNameAndBranch, paths, cohortData, species, sim
   newPixelGroups <- updatePixelGroups(cohortDataForYield)
   cohortDataForYield <- newPixelGroups$cohortData
   rcl <- as.matrix(
-    cbind(is = newPixelGroups$pixelGroupRef$oldPixelGroup,
-          becomes = newPixelGroups$pixelGroupRef$newPixelGroup)
+    cbind(is = newPixelGroups$pixelGroupRef$pixelGroup,
+          becomes = newPixelGroups$pixelGroupRef$pixelGroupYield)
   )
   
   # pick out the elements of the simList that are relevant for Caching -- not everything is
@@ -44,7 +44,7 @@ runBiomass_core <- function(moduleNameAndBranch, paths, cohortData, species, sim
   objects <- mget(objectNames, envir = simEnv)
   objects$cohortData <- cohortDataForYield
   objects$speciesEcoregion$year <- timesForYield$start
-  message("Reclassifying pixelGroups, may take a few minutes...")
+  message("Reclassifying pixelGroups, may take a few minutes...") |> Cache()
   objects$pixelGroupMap <- terra::classify(objects$pixelGroupMap, rcl)
   opts <- options("LandR.assertions" = FALSE)
   on.exit(options(opts))
@@ -75,7 +75,7 @@ runBiomass_core <- function(moduleNameAndBranch, paths, cohortData, species, sim
                       debug = 1, omitArgs = c("objects", "times", "debug"), .cacheExtra = dig
   )
   
-  list(simOutputs = simOutputs, digest = dig, pixelGroupRef = newPixelGroups$pixelGroupRef)
+  list(simOutputs = simOutputs, digest = dig, yieldPixelGroupMap = objects$pixelGroupMap)
 }
 
 simInitAndSpadesClearEnv <- function(...) {

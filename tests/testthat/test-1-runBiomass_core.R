@@ -63,15 +63,15 @@ test_that("function runBiomass_core works", {
     factorialOutputs <- out$simOutputs
     factorialOutputs$file <- file.path("testdata", "smallSimOut_cohortDataYield", list.files(cohortDataDir))
     fwrite(factorialOutputs, file.path(spadesTestPaths$testdata, "factorialOutputs.csv"))
-    fwrite(out$pixelGroupRef, file.path(spadesTestPaths$testdata, "pixelGroupRef.csv"))
   }
   
   
   # inspect output class
   expect_is(out, "list")
-  expect_equal(names(out), c("simOutputs", "digest", "pixelGroupRef"))
+  expect_equal(names(out), c("simOutputs", "digest", "yieldPixelGroupMap"))
   expect_is(out$simOutputs, "data.frame")
   expect_is(out$digest, "list")
+  expect_is(out$yieldPixelGroupMap, "SpatRaster")
   expect_equal(names(out$digest), c("outputHash", "preDigest"))
   
   #inspect simOutputs

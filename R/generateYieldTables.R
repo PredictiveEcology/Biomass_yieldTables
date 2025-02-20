@@ -1,22 +1,16 @@
-generateYieldTables <- function(cohortData, pixelGroupRef) {
+generateYieldTables <- function(cohortData) {
   cds <- copy(cohortData)
-  setkeyv(cds, c("speciesCode", "pixelGroup"))
+  setkeyv(cds, c("speciesCode", "yieldPixelGroup"))
   # Because LandR biomass will lump all age < 11 into age 0
   if ((sum(cds$age[cds$pixelGroup == 1] == 0) %% 11) == 0) {
-    cds[age == 0, age := 0:10, by = c("pixelGroup", "speciesCode")]
+    cds[age == 0, age := 0:10, by = c("yieldPixelGroup", "speciesCode")]
   }
   
-  # Retrieve original pixelGroups
-  message("Retrieving original pixelGroups")
-  cds <- merge(cds, pixelGroupRef, by.x = "pixelGroup", by.y = "newPixelGroup", allow.cartesian = TRUE)
-  cds[, pixelGroup := NULL]
-  setnames(cds, "oldPixelGroup", "pixelGroup")
-  
   # Add cohort_id. One cohort_id per pixelGroup x species
-  cds[, cohort_id:=.GRP, by = c("pixelGroup", "speciesCode")]
+  cds[, cohort_id:=.GRP, by = c("yieldPixelGroup", "speciesCode")]
   
   # Create reference table
-  cdSpeciesCodes <- unique(cds[, .(cohort_id, pixelGroup, speciesCode)])
+  cdSpeciesCodes <- unique(cds[, .(cohort_id, yieldPixelGroup, speciesCode)])
   
   # Remove columns
   cds[, speciesCode := NULL]
