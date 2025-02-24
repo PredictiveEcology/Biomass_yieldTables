@@ -68,11 +68,11 @@ test_that("function runBiomass_core works", {
   
   # inspect output class
   expect_is(out, "list")
-  expect_equal(names(out), c("simOutputs", "digest", "yieldPixelGroupMap"))
+  expect_named(out, c("simOutputs", "digest", "yieldPixelGroupMap"))
   expect_is(out$simOutputs, "data.frame")
   expect_is(out$digest, "list")
   expect_is(out$yieldPixelGroupMap, "SpatRaster")
-  expect_equal(names(out$digest), c("outputHash", "preDigest"))
+  expect_named(out$digest, c("outputHash", "preDigest"))
   
   #inspect simOutputs
   expect_true(all(out$simOutputs$objectName == "cohortData"))

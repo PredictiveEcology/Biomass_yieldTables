@@ -78,7 +78,6 @@ test_that("module runs with small example", {
   simTest <-  SpaDEStestMuffleOutput(
     SpaDES.core::spades(simTestInit, debug = FALSE)
   )
-  
   # is output a simList?
   expect_s4_class(simTest, "simList")
   # does output have your module in it
@@ -86,12 +85,10 @@ test_that("module runs with small example", {
   
   # check output yieldTables
   expect_true(!is.null(simTest$yieldTables))
-  expect_true(inherits(simTest$yieldTables, "data.table"))
+  expect_is(simTest$yieldTables, "data.table")
   
-  expected_colnames <- c("yieldPixelGroup", "age", "B", "cohort_id")
-  expect_true(all(names(simTest$yieldTables) %in% expected_colnames))
-  expect_true(all(expected_colnames %in% names(simTest$yieldTables)))
-  
+  expect_named(simTest$yieldTables, c("yieldPixelGroup", "age", "B", "cohort_id"), ignore.order = TRUE)
+
   expect_type(simTest$yieldTables$yieldPixelGroup, "integer")
   expect_type(simTest$yieldTables$age, "integer")
   expect_type(simTest$yieldTables$B, "integer")
@@ -104,19 +101,28 @@ test_that("module runs with small example", {
   expect_true(all(simTest$yieldTables$B[simTest$CBM_AGB$age == 0] == 1))
   expect_true(all(simTest$yieldTables$B >= 1))
   expect_true(all(simTest$yieldTables$age >= 0))
+  expect_in(simTest$yieldTables$yieldPixelGroup, simTest$yieldPixelGroupMap[])
+  expect_setequal(simTest$yieldTables$cohort_id, simTest$yieldSpeciesCodes$cohort_id)
+  expect_setequal(simTest$yieldTables$yieldPixelGroup, simTest$yieldSpeciesCodes$yieldPixelGroup)
   
-  # check output CBM_speciesCodes
+  # check output yieldSpeciesCodes
   expect_true(!is.null(simTest$yieldSpeciesCodes))
-  expect_true(inherits(simTest$yieldSpeciesCodes, "data.table"))
+  expect_is(simTest$yieldSpeciesCodes, "data.table")
   
-  expected_colnames <- c("yieldPixelGroup", "cohort_id", "speciesCode")
-  expect_true(all(names(simTest$yieldSpeciesCodes) %in% expected_colnames))
-  expect_true(all(expected_colnames %in% names(simTest$yieldSpeciesCodes)))
+  expect_named(simTest$yieldSpeciesCodes, c("yieldPixelGroup", "cohort_id", "speciesCode"), ignore.order = TRUE)
   
   expect_type(simTest$yieldSpeciesCodes$yieldPixelGroup, "integer")
   expect_type(simTest$yieldSpeciesCodes$cohort_id, "integer")
   expect_is(simTest$yieldSpeciesCodes$speciesCode, "factor")
   
   expect_true(anyDuplicated(simTest$yieldSpeciesCodes$cohort_id) == 0)
+  expect_in(simTest$yieldSpeciesCodes$yieldPixelGroup, simTest$yieldPixelGroupMap[])
+  
+  # check output yieldPixelGroupMap
+  expect_is(simTest$yieldPixelGroupMap, "SpatRaster")
+  expect_equal(ext(simTest$yieldPixelGroupMap), ext(simTest$rasterToMatch))
+  expect_equal(crs(simTest$yieldPixelGroupMap), crs(simTest$rasterToMatch))
+  expect_equal(res(simTest$yieldPixelGroupMap), res(simTest$rasterToMatch))
+  expect_in(simTest$yieldPixelGroupMap[!is.nan(simTest$yieldPixelGroupMap)], simTest$yieldSpeciesCodes$yieldPixelGroup)
   
 })
