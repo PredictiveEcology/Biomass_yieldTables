@@ -51,6 +51,7 @@ test_that("function runBiomass_core works", {
                          ),
                          cohortData = simOut$cohortData,
                          species = simOut$species,
+                         maxAge = NA,
                          simEnv = envir(simOut))
   
   if(updateFactorialOutputs) {
@@ -79,5 +80,32 @@ test_that("function runBiomass_core works", {
   expect_true(all(out$simOutputs$saveTime == c(1:nrow(out$simOutputs)-1)))
   expect_true(all(out$simOutputs$saved))
   expect_true(nrow(out$simOutputs) == max(simOut$species$longevity)+1)
+  
+  
+  out <- runBiomass_core(moduleNameAndBranch ="PredictiveEcology/Biomass_core@main", 
+                         paths = list(
+                           modulePath  = file.path(spadesTestPaths$temp$modules, "Biomass_yieldTables", "submodules"),
+                           inputPath   = spadesTestPaths$temp$inputs,
+                           outputPath = spadesTestPaths$temp$outputs
+                         ),
+                         cohortData = simOut$cohortData,
+                         species = simOut$species,
+                         maxAge = 20,
+                         simEnv = envir(simOut))
+  expect_equal(nrow(out$simOutputs), 21)
+  
+  
+  out <- runBiomass_core(moduleNameAndBranch ="PredictiveEcology/Biomass_core@main", 
+                         paths = list(
+                           modulePath  = file.path(spadesTestPaths$temp$modules, "Biomass_yieldTables", "submodules"),
+                           inputPath   = spadesTestPaths$temp$inputs,
+                           outputPath = spadesTestPaths$temp$outputs
+                         ),
+                         cohortData = simOut$cohortData,
+                         species = simOut$species,
+                         maxAge = 1000,
+                         simEnv = envir(simOut))
+  expect_true(nrow(out$simOutputs) == max(simOut$species$longevity)+1)
+  
   
 })
