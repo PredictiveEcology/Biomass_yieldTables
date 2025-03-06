@@ -28,6 +28,8 @@ defineModule(sim, list(
     defineParameter("numPlots", "integer", 40L, NA, NA,
                     "When plotting the yield curves, this is how many unique pixel groups will ",
                     "be randomly selected and plotted"),
+    defineParameter("maxAge", "integer", NA, NA, NA,
+                    "The number of years for which the growth tables are created."),
     defineParameter("moduleNameAndBranch", "character", "PredictiveEcology/Biomass_core@development (>= 1.3.9)", NA, NA,
                     "The branch and version number required for Biomass_core. This will be downloaded ",
                     "into the file.path(dataPath(sim), 'module') of this module, so it does not ",
@@ -106,7 +108,7 @@ doEvent.Biomass_yieldTables = function(sim, eventTime, eventType) {
 GenerateData <- function(sim) {
   message("Running simulations for all PixelGroups")
   biomassCoresOuts <-  Cache(runBiomass_core, moduleNameAndBranch = Par$moduleNameAndBranch,
-                             paths = mod$paths, cohortData = sim$cohortData,
+                             paths = mod$paths, cohortData = sim$cohortData, maxAge = Par$maxAge,
                              species = sim$species, simEnv = envir(sim))
   sim$yieldOutputs <- biomassCoresOuts$simOutputs
   sim$yieldPixelGroupMap <- biomassCoresOuts$yieldPixelGroupMap

@@ -1,6 +1,6 @@
 
 
-runBiomass_core <- function(moduleNameAndBranch, paths, cohortData, species, simEnv) {
+runBiomass_core <- function(moduleNameAndBranch, paths, cohortData, maxAge, species, simEnv) {
   # get modules if using stand alone module
   if (!is.null(moduleNameAndBranch)) {
     getModule(moduleNameAndBranch, modulePath = paths$modulePath, overwrite = TRUE) # will only overwrite if wrong version
@@ -10,7 +10,12 @@ runBiomass_core <- function(moduleNameAndBranch, paths, cohortData, species, sim
   cohortDataForYield <- copy(cohortData)
   cohortDataForYield$B <- 1L
   cohortDataForYield$age <- 0L
-  timesForYield <- list(start = 0, end = max(species$longevity))
+  
+  
+  endTime <- ifelse(is.na(maxAge), 
+                    max(species$longevity), 
+                    min(maxAge, max(species$longevity)))
+  timesForYield <- list(start = 0, end = endTime)
   
   # The following line reduce the number of pixel groups. Pixels of the same 
   # ecoregion with the same species composition will produce the same Yield Tables. 

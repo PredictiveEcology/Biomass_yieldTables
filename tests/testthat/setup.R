@@ -1,9 +1,10 @@
 if (!testthat::is_testing()){
-  library(testthat)
+  suppressPackageStartupMessages(library(testthat))
   testthat::source_test_helpers(env = globalenv())
 }
 
 # Source work in progress SpaDES module testing functions
+suppressPackageStartupMessages(library(SpaDES.core))
 tempScript <- tempfile(fileext = ".R")
 download.file(
   "https://raw.githubusercontent.com/suz-estella/SpaDES.core/refs/heads/suz-testthat/R/testthat.R",
@@ -14,7 +15,7 @@ source(tempScript)
 SpaDEStestSetGlobalOptions()
 
 # Set up testing directories
-spadesTestPaths <- SpaDEStestSetUpDirectories(copyModule = FALSE)
+spadesTestPaths <- SpaDEStestSetUpDirectories(require = 'googledrive')
 
 # Source the functions
 lapply(list.files(file.path(spadesTestPaths$RProj, "R"), full.names = TRUE), source)
