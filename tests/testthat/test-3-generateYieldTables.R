@@ -11,7 +11,6 @@ test_that("function generateYieldTables works", {
   
   cohortDataAll$B <- as.integer(round(runif(nrow(cohortDataAll), min = 1, max = 100)))
   
-  
   out <- generateYieldTables(cohortDataAll)
   # inspect out
   expect_no_error(generateYieldTables(cohortDataAll))
