@@ -24,6 +24,6 @@ testthat::test_dir(file.path("tests", "testthat"), reporter = testthat::SummaryR
 ## RUN INDIVIDUAL TESTS ----
 testthat::test_file(file.path("tests", "testthat", "test-1-runBiomass_core.R"))
 testthat::test_file(file.path("tests", "testthat", "test-2-ReadExperimentFiles.R"))
-testthat::test_file(file.path("tests", "testthat", "test-4-pltfn.R"))
-testthat::test_file(file.path("tests", "testthat", "test-5-updatePixelGroups.R"))
-testthat::test_file(file.path("tests", "testthat", "test-6-Biomass_yieldTables.R"))
+testthat::test_file(file.path("tests", "testthat", "test-3-pltfn.R"))
+testthat::test_file(file.path("tests", "testthat", "test-4-updatePixelGroups.R"))
+testthat::test_file(file.path("tests", "testthat", "test-5-Biomass_yieldTables.R"))
