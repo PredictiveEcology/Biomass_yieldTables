@@ -112,5 +112,5 @@ test_that("module runs with small example", {
   expect_type(simTest$yieldTablesId$pixelId, "integer")
   
   expect_true(anyDuplicated(simTest$yieldTablesId$pixelId) == 0)
-  expect_equal(max(simTest$yieldTablesId$pixelId), sum(!is.na(simTest$pixelGroupMap[])))
+  expect_equal(length(unique((simTest$yieldTablesId$pixelId))), sum(!is.na(simTest$pixelGroupMap[])))
 })

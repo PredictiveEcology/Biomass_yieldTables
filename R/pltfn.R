@@ -15,3 +15,10 @@ pltfn <- function(AGB, numPlots) {
     facet_wrap(~gcid)
   return(invisible(gg))
 }
+
+mapGcId <- function(yieldTablesId, rasterToMatch) {
+  mapRast <- rast(rasterToMatch)
+  mapRast[] <- NA
+  mapRast[yieldTablesId$pixelId] <- yieldTablesId$gcid
+  return(mapRast)
+}

@@ -105,8 +105,8 @@ GenerateData <- function(sim) {
   mod$yieldOutputs <- biomassCoresOuts$simOutputs
   sim$yieldTablesId <- data.table(
     gcid = as.integer(biomassCoresOuts$yieldPixelGroupMap[])
-  ) |> na.omit()
-  sim$yieldTablesId[, pixelId := .I]
+  ) 
+  sim$yieldTablesId <- sim$yieldTablesId[, pixelId := .I] |> na.omit()
   setcolorder(sim$yieldTablesId, c("pixelId", "gcid"))
   mod$digest <- biomassCoresOuts$digest
   return(sim)
@@ -123,6 +123,7 @@ GenerateYieldTables <- function(sim) {
     cohortDataAll[age == 0, age := 0:10, by = c("gcid", "speciesCode")]
   }
   sim$yieldTablesCumulative <- cohortDataAll
+  setcolorder(sim$yieldTablesCumulative, c("gcid", "speciesCode", "age", "biomass"))
   rm(cohortDataAll)
   gc()
   return(sim)
@@ -135,6 +136,11 @@ PlotYieldTables <- function(sim) {
         numPlots = Par$numPlots,
         ggsaveArgs = list(width = 10, height = 7),
         filename = fname)
+  mapRast <- rast(sim$rasterToMatch)
+  mapRast[sim$yieldTablesId$pixelId] <- sim$yieldTablesId$gcid
+  Plots(mapRast, usePlot = FALSE, 
+        ggsaveArgs = list(width = 10, height = 7),
+        filename = "gcIdMap")
   return(sim)
 }
 
