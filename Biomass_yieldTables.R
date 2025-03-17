@@ -104,9 +104,9 @@ GenerateData <- function(sim) {
                              species = sim$species, simEnv = envir(sim))
   mod$yieldOutputs <- biomassCoresOuts$simOutputs
   sim$yieldTablesId <- data.table(
-    gcid = biomassCoresOuts$yieldPixelGroupMap[]
+    gcid = as.integer(biomassCoresOuts$yieldPixelGroupMap[])
   ) |> na.omit()
-  sim$yieldTablesId[, ID := .I]
+  sim$yieldTablesId[, pixelId := .I]
   setcolorder(sim$yieldTablesId, c("pixelId", "gcid"))
   mod$digest <- biomassCoresOuts$digest
   return(sim)
@@ -119,8 +119,8 @@ GenerateYieldTables <- function(sim) {
   setnames(cohortDataAll, c("pixelGroup", "B"), c("gcid", "biomass"))
   setkeyv(cohortDataAll, c("speciesCode", "gcid"))
   # Because LandR biomass will lump all age < 11 into age 0
-  if ((sum(cds$age[cohortDataAll$pixelGroup == 1] == 0) %% 11) == 0) {
-    cohortDataAll[age == 0, age := 0:10, by = c("yieldPixelGroup", "speciesCode")]
+  if ((sum(cohortDataAll$age[cohortDataAll$pixelGroup == 1] == 0) %% 11) == 0) {
+    cohortDataAll[age == 0, age := 0:10, by = c("gcid", "speciesCode")]
   }
   sim$yieldTablesCumulative <- cohortDataAll
   rm(cohortDataAll)
@@ -131,7 +131,7 @@ GenerateYieldTables <- function(sim) {
 PlotYieldTables <- function(sim) {
   fname = paste("Yield Curves from", Par$numPlots,
                 "random plots -", gsub(":", "_", sim$._startClockTime))
-  Plots(AGB = sim$yieldTables, sp = sim$yieldSpeciesCodes, usePlot = FALSE, fn = pltfn,
+  Plots(AGB = sim$yieldTablesCumulative, usePlot = FALSE, fn = pltfn,
         numPlots = Par$numPlots,
         ggsaveArgs = list(width = 10, height = 7),
         filename = fname)
@@ -146,7 +146,7 @@ PlotYieldTables <- function(sim) {
   message(currentModule(sim), ": using dataPath '", dPath, "'.")
   
   if (!suppliedElsewhere("rasterToMatch", sim)) {
-    stop("Please provide a 'studyArea' polygon")
+    stop("Please provide a 'rasterToMatch' object")
   }
   
   if (!suppliedElsewhere("cohortData", sim)) {
