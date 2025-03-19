@@ -68,9 +68,9 @@ defineModule(sim, list(
   outputObjects = bindrows(
     createsOutput(objectName = "yieldTablesCumulative", objectClass = "data.table",
                   paste("Yield Tables intended to supply the requirements for a CBM spinup.",
-                  "Columns are `gcid`, `age`, `speciesCode`, `biomass`. `gcid` is the",
-                  "growth curve identifier that depends on species combination.",
-                  "`biomass` is the biomass for the given species at the pixel age.")),
+                        "Columns are `gcid`, `age`, `speciesCode`, `biomass`. `gcid` is the",
+                        "growth curve identifier that depends on species combination.",
+                        "`biomass` is the biomass for the given species at the pixel age.")),
     createsOutput(objectName = "yieldTablesId", objectClass = "data.table",
                   "A data.table linking spatially the `gcid`. Columns are `pixelId` and `gcid`")
   )
@@ -105,7 +105,7 @@ GenerateData <- function(sim) {
   mod$yieldOutputs <- biomassCoresOuts$simOutputs
   sim$yieldTablesId <- data.table(
     gcid = as.integer(biomassCoresOuts$yieldPixelGroupMap[])
-  ) 
+  )
   sim$yieldTablesId <- sim$yieldTablesId[, pixelId := .I] |> na.omit()
   setcolorder(sim$yieldTablesId, c("pixelId", "gcid"))
   mod$digest <- biomassCoresOuts$digest
@@ -138,8 +138,7 @@ PlotYieldTables <- function(sim) {
         filename = fname)
   mapRast <- rast(sim$rasterToMatch)
   mapRast[sim$yieldTablesId$pixelId] <- sim$yieldTablesId$gcid
-  Plots(mapRast, usePlot = FALSE, 
-        ggsaveArgs = list(width = 10, height = 7),
+  Plots(mapRast, usePlot = TRUE, deviceArgs = list(width = 700, height = 500),
         filename = "gcIdMap")
   return(sim)
 }
