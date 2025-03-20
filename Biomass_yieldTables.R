@@ -101,7 +101,8 @@ GenerateData <- function(sim) {
   message("Running simulations for all PixelGroups")
   biomassCoresOuts <-  Cache(runBiomass_core, moduleNameAndBranch = Par$moduleNameAndBranch,
                              paths = mod$paths, cohortData = sim$cohortData, maxAge = Par$maxAge,
-                             species = sim$species, simEnv = envir(sim))
+                             species = sim$species, simEnv = envir(sim),
+                             omitArgs = "simEnv")
   mod$yieldOutputs <- biomassCoresOuts$simOutputs
   sim$yieldTablesId <- data.table(
     gcid = as.integer(biomassCoresOuts$yieldPixelGroupMap[])
@@ -115,11 +116,9 @@ GenerateData <- function(sim) {
 GenerateYieldTables <- function(sim) {
   message("Simulation done! Loading in cohortData files")
   cohortDataAll <- Cache(ReadExperimentFiles, omitArgs = "factorialOutputs",
-                         .cacheExtra = mod$digest$outputHash, as.data.table(mod$yieldOutputs)[saved == TRUE])  # function already exists
-  setnames(cohortDataAll, c("pixelGroup", "B"), c("gcid", "biomass"))
-  setkeyv(cohortDataAll, c("speciesCode", "gcid"))
+                         .cacheExtra = mod$digest$outputHash, as.data.table(mod$yieldOutputs)[saved == TRUE])
   # Because LandR biomass will lump all age < 11 into age 0
-  if ((sum(cohortDataAll$age[cohortDataAll$pixelGroup == 1] == 0) %% 11) == 0) {
+  if ((sum(cohortDataAll$age[cohortDataAll$gcid == cohortDataAll$gcid[1]] == 0) %% 11) == 0) {
     cohortDataAll[age == 0, age := 0:10, by = c("gcid", "speciesCode")]
   }
   sim$yieldTablesCumulative <- cohortDataAll
