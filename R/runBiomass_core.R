@@ -23,7 +23,7 @@ runBiomass_core <- function(moduleNameAndBranch, paths, cohortData, maxAge, spec
   # and retrieve them later.
   
   # update pixelGroups
-  newPixelGroups <- updatePixelGroups(cohortDataForYield)
+  newPixelGroups <- updatePixelGroups(cohortDataForYield) |> Cache()
   cohortDataForYield <- newPixelGroups$cohortData
   rcl <- as.matrix(
     cbind(is = newPixelGroups$pixelGroupRef$pixelGroup,
@@ -49,8 +49,8 @@ runBiomass_core <- function(moduleNameAndBranch, paths, cohortData, maxAge, spec
   objects <- mget(objectNames, envir = simEnv)
   objects$cohortData <- cohortDataForYield
   objects$speciesEcoregion$year <- timesForYield$start
-  message("Reclassifying pixelGroups, may take a few minutes...") |> Cache()
-  objects$pixelGroupMap <- terra::classify(objects$pixelGroupMap, rcl)
+  message("Reclassifying pixelGroups, may take a few minutes...")
+  objects$pixelGroupMap <- terra::classify(objects$pixelGroupMap, rcl) |> Cache()
   opts <- options("LandR.assertions" = FALSE)
   on.exit(options(opts))
   parameters <- list(

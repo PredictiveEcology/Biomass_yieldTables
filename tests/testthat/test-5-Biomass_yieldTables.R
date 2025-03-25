@@ -67,7 +67,6 @@ test_that("module runs with small example", {
       objects = outs
     )
   )
-  
   simTestInit <-  SpaDEStestMuffleOutput(
     SpaDES.core::simInit2(simInitInput)
   )
@@ -83,46 +82,35 @@ test_that("module runs with small example", {
   # does output have your module in it
   expect_true(any(unlist(modules(simTest)) %in% module))
   
-  # check output yieldTables
-  expect_true(!is.null(simTest$yieldTables))
-  expect_is(simTest$yieldTables, "data.table")
+  # check output yieldTablesCumulative
+  expect_true(!is.null(simTest$yieldTablesCumulative))
+  expect_is(simTest$yieldTablesCumulative, "data.table")
   
-  expect_named(simTest$yieldTables, c("yieldPixelGroup", "age", "B", "cohort_id"), ignore.order = TRUE)
+  expect_named(simTest$yieldTablesCumulative, c("gcid", "speciesCode", "age", "biomass"), ignore.order = TRUE)
 
-  expect_type(simTest$yieldTables$yieldPixelGroup, "integer")
-  expect_type(simTest$yieldTables$age, "integer")
-  expect_type(simTest$yieldTables$B, "integer")
-  expect_type(simTest$yieldTables$cohort_id, "integer")
+  expect_type(simTest$yieldTablesCumulative$gcid, "integer")
+  expect_s3_class(simTest$yieldTablesCumulative$speciesCode, "factor")
+  expect_type(simTest$yieldTablesCumulative$age, "integer")
+  expect_type(simTest$yieldTablesCumulative$biomass, "integer")
   
-  expect_true(anyDuplicated(simTest$yieldTables[,c("age", "cohort_id")]) == 0)
+  expect_true(anyDuplicated(simTest$yieldTablesCumulative[,c("age", "speciesCode", "gcid")]) == 0)
   
-  expect_true(nrow(simTest$yieldTables) > 0)
-  expect_true(max(simTest$yieldTables$age) == max(simTest$species$longevity))
-  expect_true(all(simTest$yieldTables$B[simTest$CBM_AGB$age == 0] == 1))
-  expect_true(all(simTest$yieldTables$B >= 1))
-  expect_true(all(simTest$yieldTables$age >= 0))
-  expect_in(simTest$yieldTables$yieldPixelGroup, simTest$yieldPixelGroupMap[])
-  expect_setequal(simTest$yieldTables$cohort_id, simTest$yieldSpeciesCodes$cohort_id)
-  expect_setequal(simTest$yieldTables$yieldPixelGroup, simTest$yieldSpeciesCodes$yieldPixelGroup)
+  expect_true(nrow(simTest$yieldTablesCumulative) > 0)
+  expect_true(max(simTest$yieldTablesCumulative$age) == max(simTest$species$longevity))
+  expect_true(all(simTest$yieldTablesCumulative$biomass[simTest$yieldTablesCumulative$age == 0] == 1))
+  expect_true(all(simTest$yieldTablesCumulative$biomass >= 1))
+  expect_true(all(simTest$yieldTablesCumulative$age >= 0))
+  expect_setequal(simTest$yieldTablesCumulative$gcid, simTest$yieldTablesId$gcid)
   
-  # check output yieldSpeciesCodes
-  expect_true(!is.null(simTest$yieldSpeciesCodes))
-  expect_is(simTest$yieldSpeciesCodes, "data.table")
+  # check output yieldTablesId
+  expect_true(!is.null(simTest$yieldTablesId))
+  expect_is(simTest$yieldTablesId, "data.table")
   
-  expect_named(simTest$yieldSpeciesCodes, c("yieldPixelGroup", "cohort_id", "speciesCode"), ignore.order = TRUE)
+  expect_named(simTest$yieldTablesId, c("gcid", "pixelId"), ignore.order = TRUE)
   
-  expect_type(simTest$yieldSpeciesCodes$yieldPixelGroup, "integer")
-  expect_type(simTest$yieldSpeciesCodes$cohort_id, "integer")
-  expect_is(simTest$yieldSpeciesCodes$speciesCode, "factor")
+  expect_type(simTest$yieldTablesId$gcid, "integer")
+  expect_type(simTest$yieldTablesId$pixelId, "integer")
   
-  expect_true(anyDuplicated(simTest$yieldSpeciesCodes$cohort_id) == 0)
-  expect_in(simTest$yieldSpeciesCodes$yieldPixelGroup, simTest$yieldPixelGroupMap[])
-  
-  # check output yieldPixelGroupMap
-  expect_is(simTest$yieldPixelGroupMap, "SpatRaster")
-  expect_equal(ext(simTest$yieldPixelGroupMap), ext(simTest$rasterToMatch))
-  expect_equal(crs(simTest$yieldPixelGroupMap), crs(simTest$rasterToMatch))
-  expect_equal(res(simTest$yieldPixelGroupMap), res(simTest$rasterToMatch))
-  expect_in(simTest$yieldPixelGroupMap[!is.nan(simTest$yieldPixelGroupMap)], simTest$yieldSpeciesCodes$yieldPixelGroup)
-  
+  expect_true(anyDuplicated(simTest$yieldTablesId$pixelId) == 0)
+  expect_equal(length(unique((simTest$yieldTablesId$pixelId))), sum(!is.na(simTest$pixelGroupMap[])))
 })

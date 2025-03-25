@@ -1,5 +1,5 @@
-pltfn <- function(AGB, sp, numPlots) {
-  numGroups <- length(unique(sp$yieldPixelGroup))
+pltfn <- function(AGB, numPlots) {
+  numGroups <- length(unique(AGB$gcid))
   
   if (numPlots <= 0){
     stop("numPlots needs to be a positive integer")
@@ -8,12 +8,17 @@ pltfn <- function(AGB, sp, numPlots) {
             "plotting all pixelgroups.")
     numPlots <- numGroups
   }
-  pullOutId <- sample(unique(AGB$yieldPixelGroup), size = numPlots)
-  id2 <- AGB[yieldPixelGroup %in% pullOutId]
-  setnames(id2, "B", "AGB")
-  sp <- sp[yieldPixelGroup %in% pullOutId]
-  id2 <- id2[sp, on = c("cohort_id", "yieldPixelGroup")]
+  pullOutId <- sample(unique(AGB$gcid), size = numPlots)
+  id2 <- AGB[gcid %in% pullOutId]
+  setnames(id2, "biomass", "AGB")
   gg <- ggplot(id2, aes(age, AGB, color = speciesCode)) + geom_line() + theme_bw() +
-    facet_wrap(~yieldPixelGroup)
+    facet_wrap(~gcid)
   return(invisible(gg))
+}
+
+mapGcId <- function(yieldTablesId, rasterToMatch) {
+  mapRast <- rast(rasterToMatch)
+  mapRast[] <- NA
+  mapRast[yieldTablesId$pixelId] <- yieldTablesId$gcid
+  return(mapRast)
 }

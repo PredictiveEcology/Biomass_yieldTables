@@ -61,26 +61,18 @@ defineModule(sim, list(
                               "and may be ommited. However, this may result in downstream issues with",
                               "other modules. Must be supplied by the user or created in another module",
                               "like *biomass_BiomassDataPrep*.")),
-    expectsInput("studyArea", "sfc",
-                 desc = paste("Polygon to use as the study area. Must be supplied by the user. Can also be a SpatVector."))
-    
+    expectsInput(
+      objectName = "rasterToMatch", objectClass =  "SpatRaster",
+      desc = "template raster to use for simulations; defaults to RIA study area")
   ),
   outputObjects = bindrows(
-    createsOutput(objectName = "yieldOutputs", objectClass = "data.frame",
-                  desc = "A data.frame showing the cohortData files that were created during this ",
-                  "module. Normally, these can be deleted as they are re-read within this module ",
-                  "and converted into CBM_AGB and CBM_speciesCodes."),
-    createsOutput(objectName = "yieldTables", objectClass = "data.table",
-                  "A large object intended to supply the eventual requirements for a CBM growth increment object. ",
-                  "This one will have column names of yieldPixelGroup, age, cohort_id, B. The last ",
-                  "column represent aboveground biomass of that cohort_id at that age. Note, these ",
-                  "will not be strictly increasing as the species approaches its longevity. ",
-                  "To see what these three species map onto in real species, see yieldSpeciesCodes"),
-    createsOutput(objectName = "yieldSpeciesCodes", objectClass = "data.table",
-                  "An object with 3 columns: yieldPixelGroup, cohort_id, and speciesCode. This provides the species ",
-                  "mapping for the yieldTables object"),
-    createsOutput(objectName = "yieldPixelGroupMap", objectClass = "spatRaster",
-                 "A raster mapping yieldPixelGroup")
+    createsOutput(objectName = "yieldTablesCumulative", objectClass = "data.table",
+                  paste("Yield Tables intended to supply the requirements for a CBM spinup.",
+                        "Columns are `gcid`, `age`, `speciesCode`, `biomass`. `gcid` is the",
+                        "growth curve identifier that depends on species combination.",
+                        "`biomass` is the biomass for the given species at the pixel age.")),
+    createsOutput(objectName = "yieldTablesId", objectClass = "data.table",
+                  "A data.table linking spatially the `gcid`. Columns are `pixelId` and `gcid`")
   )
 ))
 
@@ -109,9 +101,14 @@ GenerateData <- function(sim) {
   message("Running simulations for all PixelGroups")
   biomassCoresOuts <-  Cache(runBiomass_core, moduleNameAndBranch = Par$moduleNameAndBranch,
                              paths = mod$paths, cohortData = sim$cohortData, maxAge = Par$maxAge,
-                             species = sim$species, simEnv = envir(sim))
-  sim$yieldOutputs <- biomassCoresOuts$simOutputs
-  sim$yieldPixelGroupMap <- biomassCoresOuts$yieldPixelGroupMap
+                             species = sim$species, simEnv = envir(sim),
+                             omitArgs = "simEnv")
+  mod$yieldOutputs <- biomassCoresOuts$simOutputs
+  sim$yieldTablesId <- data.table(
+    gcid = as.integer(biomassCoresOuts$yieldPixelGroupMap[])
+  )
+  sim$yieldTablesId <- sim$yieldTablesId[, pixelId := .I] |> na.omit()
+  setcolorder(sim$yieldTablesId, c("pixelId", "gcid"))
   mod$digest <- biomassCoresOuts$digest
   return(sim)
 }
@@ -119,13 +116,14 @@ GenerateData <- function(sim) {
 GenerateYieldTables <- function(sim) {
   message("Simulation done! Loading in cohortData files")
   cohortDataAll <- Cache(ReadExperimentFiles, omitArgs = "factorialOutputs",
-                         .cacheExtra = mod$digest$outputHash, as.data.table(sim$yieldOutputs)[saved == TRUE])  # function already exists
-  setnames(cohortDataAll, "pixelGroup", "yieldPixelGroup")
-  message("Converting to CBM Growth Increment ... This may take several minutes")
-  cdObjs <- Cache(generateYieldTables, .cacheExtra = mod$digest$outputHash, cohortDataAll, omitArgs = c("cohortData"))
-  sim$yieldTables <- cdObjs$cds
-  sim$yieldSpeciesCodes <- cdObjs$cdSpeciesCodes
-  rm(cdObjs, cohortDataAll)
+                         .cacheExtra = mod$digest$outputHash, as.data.table(mod$yieldOutputs)[saved == TRUE])
+  # Because LandR biomass will lump all age < 11 into age 0
+  if ((sum(cohortDataAll$age[cohortDataAll$gcid == cohortDataAll$gcid[1]] == 0) %% 11) == 0) {
+    cohortDataAll[age == 0, age := 0:10, by = c("gcid", "speciesCode")]
+  }
+  sim$yieldTablesCumulative <- cohortDataAll
+  setcolorder(sim$yieldTablesCumulative, c("gcid", "speciesCode", "age", "biomass"))
+  rm(cohortDataAll)
   gc()
   return(sim)
 }
@@ -133,10 +131,14 @@ GenerateYieldTables <- function(sim) {
 PlotYieldTables <- function(sim) {
   fname = paste("Yield Curves from", Par$numPlots,
                 "random plots -", gsub(":", "_", sim$._startClockTime))
-  Plots(AGB = sim$yieldTables, sp = sim$yieldSpeciesCodes, usePlot = FALSE, fn = pltfn,
+  Plots(AGB = sim$yieldTablesCumulative, usePlot = FALSE, fn = pltfn,
         numPlots = Par$numPlots,
         ggsaveArgs = list(width = 10, height = 7),
         filename = fname)
+  mapRast <- rast(sim$rasterToMatch)
+  mapRast[sim$yieldTablesId$pixelId] <- sim$yieldTablesId$gcid
+  Plots(mapRast, usePlot = TRUE, deviceArgs = list(width = 700, height = 500),
+        filename = "gcIdMap")
   return(sim)
 }
 
@@ -147,8 +149,8 @@ PlotYieldTables <- function(sim) {
   dPath <- asPath(getOption("reproducible.destinationPath", dataPath(sim)), 1)
   message(currentModule(sim), ": using dataPath '", dPath, "'.")
   
-  if (!suppliedElsewhere("studyArea", sim)) {
-    stop("Please provide a 'studyArea' polygon")
+  if (!suppliedElsewhere("rasterToMatch", sim)) {
+    stop("Please provide a 'rasterToMatch' object")
   }
   
   if (!suppliedElsewhere("cohortData", sim)) {
