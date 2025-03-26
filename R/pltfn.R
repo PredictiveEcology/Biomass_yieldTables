@@ -19,6 +19,6 @@ pltfn <- function(AGB, numPlots) {
 mapGcId <- function(yieldTablesId, rasterToMatch) {
   mapRast <- rast(rasterToMatch)
   mapRast[] <- NA
-  mapRast[yieldTablesId$pixelId] <- yieldTablesId$gcid
+  mapRast[yieldTablesId$pixelIndex] <- yieldTablesId$gcid
   return(mapRast)
 }
