@@ -5,7 +5,7 @@ test_that("function ReadExperimentFiles works", {
   out <- SpaDEStestMuffleOutput(ReadExperimentFiles(factorialOutputs))
   
   expect_is(out, "data.table")
-  expect_named(out, c("speciesCode", "age", "B", "pixelGroup"))
+  expect_named(out, c("speciesCode", "age", "biomass", "gcid"))
   expect_equal(max(out$age), nrow(factorialOutputs)-1)
   
 })

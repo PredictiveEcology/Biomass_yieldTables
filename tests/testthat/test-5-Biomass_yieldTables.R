@@ -106,11 +106,11 @@ test_that("module runs with small example", {
   expect_true(!is.null(simTest$yieldTablesId))
   expect_is(simTest$yieldTablesId, "data.table")
   
-  expect_named(simTest$yieldTablesId, c("gcid", "pixelId"), ignore.order = TRUE)
+  expect_named(simTest$yieldTablesId, c("gcid", "pixelIndex"), ignore.order = TRUE)
   
   expect_type(simTest$yieldTablesId$gcid, "integer")
-  expect_type(simTest$yieldTablesId$pixelId, "integer")
+  expect_type(simTest$yieldTablesId$pixelIndex, "integer")
   
-  expect_true(anyDuplicated(simTest$yieldTablesId$pixelId) == 0)
-  expect_equal(length(unique((simTest$yieldTablesId$pixelId))), sum(!is.na(simTest$pixelGroupMap[])))
+  expect_true(anyDuplicated(simTest$yieldTablesId$pixelIndex) == 0)
+  expect_equal(length(unique((simTest$yieldTablesId$pixelIndex))), sum(!is.na(simTest$pixelGroupMap[])))
 })
