@@ -13,7 +13,7 @@ ReadExperimentFiles <- function(factorialOutputs) {
   gc() # need to clear memory
   message("rbindlisting the cohortData objects")
   cds <- rbindlist(cdsList, use.names = TRUE, fill = TRUE)
-  setnames(cds, c("pixelGroup", "B"), c("gcid", "biomass"))
-  setkeyv(cds, c("speciesCode", "gcid"))
+  setnames(cds, c("pixelGroup", "B"), c("yieldTableIndex", "biomass"))
+  setkeyv(cds, c("speciesCode", "yieldTableIndex"))
   return(invisible(cds))
 }

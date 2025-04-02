@@ -5,7 +5,7 @@ test_that("function pltfn works", {
   nage <- 5
   nsp <- 2
   AGB <- data.table::as.data.table(
-    expand.grid(gcid = c(1:ngroup),
+    expand.grid(yieldTableIndex = c(1:ngroup),
                 age = c(1:nage),
                 speciesCode = as.factor(c(1:nsp)))
   )
