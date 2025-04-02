@@ -68,11 +68,12 @@ defineModule(sim, list(
   outputObjects = bindrows(
     createsOutput(objectName = "yieldTablesCumulative", objectClass = "data.table",
                   paste("Yield Tables intended to supply the requirements for a CBM spinup.",
-                        "Columns are `gcid`, `age`, `speciesCode`, `biomass`. `gcid` is the",
-                        "growth curve identifier that depends on species combination.",
-                        "`biomass` is the biomass for the given species at the pixel age.")),
+                        "Columns are `yieldTableIndex`, `age`, `speciesCode`, `biomass`.",
+                        "`yieldTableIndex` is the growth curve identifier that depends",
+                        "on species combination. `biomass` is the biomass for the",
+                        "given species at the pixel age.")),
     createsOutput(objectName = "yieldTablesId", objectClass = "data.table",
-                  "A data.table linking spatially the `gcid`. Columns are `pixelIndex` and `gcid`")
+                  "A data.table linking spatially the `yieldTableIndex`. Columns are `pixelIndex` and `yieldTableIndex`")
   )
 ))
 
@@ -105,10 +106,10 @@ GenerateData <- function(sim) {
                              omitArgs = "simEnv")
   mod$yieldOutputs <- biomassCoresOuts$simOutputs
   sim$yieldTablesId <- data.table(
-    gcid = as.integer(biomassCoresOuts$yieldPixelGroupMap[])
+    yieldTableIndex = as.integer(biomassCoresOuts$yieldPixelGroupMap[])
   )
   sim$yieldTablesId <- sim$yieldTablesId[, pixelIndex := .I] |> na.omit()
-  setcolorder(sim$yieldTablesId, c("pixelIndex", "gcid"))
+  setcolorder(sim$yieldTablesId, c("pixelIndex", "yieldTableIndex"))
   mod$digest <- biomassCoresOuts$digest
   return(sim)
 }
@@ -118,11 +119,11 @@ GenerateYieldTables <- function(sim) {
   cohortDataAll <- Cache(ReadExperimentFiles, omitArgs = "factorialOutputs",
                          .cacheExtra = mod$digest$outputHash, as.data.table(mod$yieldOutputs)[saved == TRUE])
   # Because LandR biomass will lump all age < 11 into age 0
-  if ((sum(cohortDataAll$age[cohortDataAll$gcid == cohortDataAll$gcid[1]] == 0) %% 11) == 0) {
-    cohortDataAll[age == 0, age := 0:10, by = c("gcid", "speciesCode")]
+  if ((sum(cohortDataAll$age[cohortDataAll$yieldTableIndex == cohortDataAll$yieldTableIndex[1]] == 0) %% 11) == 0) {
+    cohortDataAll[age == 0, age := 0:10, by = c("yieldTableIndex", "speciesCode")]
   }
   sim$yieldTablesCumulative <- cohortDataAll
-  setcolorder(sim$yieldTablesCumulative, c("gcid", "speciesCode", "age", "biomass"))
+  setcolorder(sim$yieldTablesCumulative, c("yieldTableIndex", "speciesCode", "age", "biomass"))
   rm(cohortDataAll)
   gc()
   return(sim)
@@ -136,9 +137,9 @@ PlotYieldTables <- function(sim) {
         ggsaveArgs = list(width = 10, height = 7),
         filename = fname)
   mapRast <- rast(sim$rasterToMatch)
-  mapRast[sim$yieldTablesId$pixelIndex] <- sim$yieldTablesId$gcid
+  mapRast[sim$yieldTablesId$pixelIndex] <- sim$yieldTablesId$yieldTableIndex
   Plots(mapRast, usePlot = TRUE, deviceArgs = list(width = 700, height = 500),
-        filename = "gcIdMap")
+        filename = "yieldTableIdMap")
   return(sim)
 }
 
