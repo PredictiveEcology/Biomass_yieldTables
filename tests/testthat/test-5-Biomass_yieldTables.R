@@ -86,29 +86,29 @@ test_that("module runs with small example", {
   expect_true(!is.null(simTest$yieldTablesCumulative))
   expect_is(simTest$yieldTablesCumulative, "data.table")
   
-  expect_named(simTest$yieldTablesCumulative, c("gcid", "speciesCode", "age", "biomass"), ignore.order = TRUE)
+  expect_named(simTest$yieldTablesCumulative, c("yieldTableIndex", "speciesCode", "age", "biomass"), ignore.order = TRUE)
 
-  expect_type(simTest$yieldTablesCumulative$gcid, "integer")
+  expect_type(simTest$yieldTablesCumulative$yieldTableIndex, "integer")
   expect_s3_class(simTest$yieldTablesCumulative$speciesCode, "factor")
   expect_type(simTest$yieldTablesCumulative$age, "integer")
   expect_type(simTest$yieldTablesCumulative$biomass, "integer")
   
-  expect_true(anyDuplicated(simTest$yieldTablesCumulative[,c("age", "speciesCode", "gcid")]) == 0)
+  expect_true(anyDuplicated(simTest$yieldTablesCumulative[,c("age", "speciesCode", "yieldTableIndex")]) == 0)
   
   expect_true(nrow(simTest$yieldTablesCumulative) > 0)
   expect_true(max(simTest$yieldTablesCumulative$age) == max(simTest$species$longevity))
   expect_true(all(simTest$yieldTablesCumulative$biomass[simTest$yieldTablesCumulative$age == 0] == 1))
   expect_true(all(simTest$yieldTablesCumulative$biomass >= 1))
   expect_true(all(simTest$yieldTablesCumulative$age >= 0))
-  expect_setequal(simTest$yieldTablesCumulative$gcid, simTest$yieldTablesId$gcid)
+  expect_setequal(simTest$yieldTablesCumulative$yieldTableIndex, simTest$yieldTablesId$yieldTableIndex)
   
   # check output yieldTablesId
   expect_true(!is.null(simTest$yieldTablesId))
   expect_is(simTest$yieldTablesId, "data.table")
   
-  expect_named(simTest$yieldTablesId, c("gcid", "pixelIndex"), ignore.order = TRUE)
+  expect_named(simTest$yieldTablesId, c("yieldTableIndex", "pixelIndex"), ignore.order = TRUE)
   
-  expect_type(simTest$yieldTablesId$gcid, "integer")
+  expect_type(simTest$yieldTablesId$yieldTableIndex, "integer")
   expect_type(simTest$yieldTablesId$pixelIndex, "integer")
   
   expect_true(anyDuplicated(simTest$yieldTablesId$pixelIndex) == 0)
