@@ -113,5 +113,5 @@ An example of a workflow to build yield tables for the RIA study area (Northeast
 
 1. Better define the inputs. Only the object `cohortData` (biomass of each cohort within pixel groups), `species` (species traits), and `rasterToMatch` are describe in the metadata, and there are no default values. In theory, a user could provide any of the inputs needed to run `Biomass_core`. Since there are no default values, the module cannot be run as a standalone and needs to be run with a data preparation module or the user needs to provide a `simList` with the needed objects to run `Biomass_core`.
 
-2. `Biomass_core`is cloned in the submodules folder. When `Biomass_yieldTables` is ran in a project with `Biomass_speciesFactorial` (which also clone `Biomass_core`) and/or `Biomass_core` it shouldn't be necessary to clone it again.
+2. `Biomass_yieldTables` clones `Biomass_core` in the submodules folder. When `Biomass_core` is already in the project (e.g., if it uses `Biomass_speciesFactorial`, which also clone `Biomass_core`, and/or `Biomass_core`) it shouldn't be necessary to clone it again.
 
