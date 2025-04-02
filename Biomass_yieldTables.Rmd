@@ -45,11 +45,11 @@ download.file(url = "https://img.shields.io/badge/Made%20with-Markdown-1f425f.pn
 
 ### Module summary
 
-The objective of this module is to produce yield curves for a user-specified study area from `LandR` simulations. To do so, the module initialize the landscape keeping species composition, but setting all biomasses to 1 and ages 0. The module `Biomass_core` is then run internally without dispersal and disturbances to simulate vegetation dynamics from year 0 until all species dies out (i.e., maximum longevity among all species). Finally, the module records the aboveground biomass of each species, in each pixel, at each time step to build yield tables that take into account species traits and competition.
+The objective of this module is to produce yield curves for a user-specified study area from `LandR` simulations. To do so, the module initialize the landscape keeping species composition, but setting all biomass to 1 and ages 0. The module `Biomass_core` is then run internally without dispersal and disturbances to simulate vegetation dynamics from year 0 until all species dies out (i.e., maximum longevity among all species). The module records the above ground biomass of each species, in each pixel, at each time step to build yield tables that take into account species traits and competition.
 
 ### Module inputs and parameters
 
-The module has the same inputs as `Biomass_core`. For now, there are no defaults for the inputs, and the user either need to provide all input needed or use the module with other modules that would prepare the inputs (e.g., `Biomass_borealDataPrep`).
+The module has the same inputs as `Biomass_core`. For now, there are no defaults for the inputs, and the user either need to provide all the inputs needed or use the module with other modules that would prepare the inputs (e.g., `Biomass_borealDataPrep`).
 
 Table \@ref(tab:moduleInputs-Biomass-yieldTables) shows the full list of module inputs.
 
@@ -71,15 +71,23 @@ knitr::kable(df_params, caption = "List of (ref:Biomass-yieldTables) parameters 
 
 ### Events
 
-Describe what happens for each event type.
+Everything that the module does is in the `init` event: 
+
+1. The module initializes the landscape keeping the species present in each pixel, and setting all species ages to 0 and biomass to 1.
+2. New pixel groups are created for pixels that shares the same species composition and ecoregion, these pixel groups will becomre the `yieldTableIndex`.
+3. Vegetation dynamics is simulated by running `Biomass_core` internally. The object `cohortData` is saved each year.
+4. The `cohortData` files saved in step 2 are loaded and combined to create the yield tables.
+5. The module plots the resulting `yieldTables`.
 
 ### Plotting
 
-Write what is plotted.
+By default, the module plots the yield table for 40 set of growth curves (a set of growth curve being the growth of all species coexisting in a given pixel, named `yieldTableIndex`). The number of set of growth curves can be changed with the parameter `numPlots`. 
+
+The module also plots the maps the `yieldTableIndex`. Each forested pixel has a `yieldTableIndex` referencing the set of growth curve for this pixel.
 
 ### Saving
 
-Write what is saved.
+Nothing gets saved.
 
 ### Module outputs
 
@@ -93,8 +101,14 @@ knitr::kable(df_outputs, caption = "List of (ref:Biomass-yieldTables) outputs an
 
 ### Links to other modules
 
-Describe any anticipated linkages to other modules, such as modules that supply input data or do post-hoc analysis.
+Since there are no default inputs for `Biomass_yieldTables`, it will most likely always be run with `Biomass_borealDataPrep` or another module that prepares the data to run `Biomass_core`. Using `Biomass_yieldTables` with `Biomass_borealDataPrep` would generate yield tables using the default `LandR` species traits, which often underestimate species coexistence. Using the module `Biomass_speciesParameters` and `Biomass_speciesFactorial` to calibrate species traits with permanent sample plots will help generate that capture more realistically competition.
 
-### Getting help
+The yield tables created by this module as inputs for module that need growth curves. For example, we can use the yield tables to simulate cohort growth like `spadesCBM`. 
 
--   provide a way for people to obtain help (e.g., module repository issues page)
+### Usage
+
+An example of a workflow to build yield tables for the RIA study area (Northeast British-Columbia) can be found in the script `global_LandRyieldTables.R` of the repository [LandRCBM](https://github.com/DominiqueCaron/LandRCBM).
+
+### Things to do
+
+1. Better define the inputs. Only the object `cohortData` (biomass of each cohort within pixel groups), `species` (species traits), and `rasterToMatch` are describe in the metadata, and there are no default values. In theory, a user could provide any of the inputs needed to run `Biomass_core`. Since there are no default values, the module cannot be run as a standalone and needs to be run with a data preparation module or the user needs to provide a `simList` with the needed objects to run `Biomass_core`.
