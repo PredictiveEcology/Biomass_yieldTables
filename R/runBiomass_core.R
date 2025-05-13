@@ -66,6 +66,7 @@ runBiomass_core <- function(moduleNameAndBranch, paths, cohortData, maxAge, spec
       , "vegLeadingProportion" = 0
       , "calcSummaryBGM" = NULL
       , "seedingAlgorithm" = "noSeeding"
+      , "minCohortBiomass" = 1
     )
   )
   paths$outputPath <- file.path(paths$outputPath, "cohortDataYield")
