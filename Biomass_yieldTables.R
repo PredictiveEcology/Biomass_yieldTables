@@ -84,7 +84,7 @@ doEvent.Biomass_yieldTables = function(sim, eventTime, eventType) {
     init = {
       mod$paths <- paths(sim)
       if (!is.null(Par$moduleNameAndBranch)) {
-        mod$paths$modulePath <- file.path(modulePath(sim), currentModule(sim), "submodules")
+        mod$paths$modulePath <- file.path(modulePath(sim)[1], currentModule(sim), "submodules")
       }
       sim <- GenerateData(sim)
       
