@@ -108,6 +108,20 @@ GenerateData <- function(sim) {
   sim$yieldTablesId <- data.table(
     yieldTableIndex = as.integer(biomassCoresOuts$yieldPixelGroupMap[])
   )
+  ####
+  i <- 1L
+  while(any(sim$yieldTablesId$yieldTableIndex == 0) && i < 50){
+    message("Filling empty forest pixels: round ", i)
+    Npix <- sum(sim$yieldTablesId$yieldTableIndex == 0, na.rm = T)
+    message(Npix, " pixels to fill.")
+    windowSize = 1 + 2 * i
+    message("Using window size = ", windowSize)
+    focaledYldPixGrMap <- focal(biomassCoresOuts$yieldPixelGroupMap, w = windowSize, fun = "modal", na.rm = TRUE, na.policy="omit")
+    sim$yieldTablesId[yieldTableIndex == 0, "yieldTableIndex"] <- focaledYldPixGrMap[sim$yieldTablesId$yieldTableIndex == 0]
+    biomassCoresOuts$yieldPixelGroupMap[biomassCoresOuts$yieldPixelGroupMap == 0] <- focaledYldPixGrMap[biomassCoresOuts$yieldPixelGroupMap == 0]
+    i <- i + 1L
+  }
+  ####
   sim$yieldTablesId <- sim$yieldTablesId[, pixelIndex := .I] |> na.omit()
   setcolorder(sim$yieldTablesId, c("pixelIndex", "yieldTableIndex"))
   mod$digest <- biomassCoresOuts$digest
