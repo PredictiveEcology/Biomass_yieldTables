@@ -109,17 +109,22 @@ GenerateData <- function(sim) {
     yieldTableIndex = as.integer(biomassCoresOuts$yieldPixelGroupMap[])
   )
   ####
+  windowSize <- 3L
   i <- 1L
-  while(any(sim$yieldTablesId$yieldTableIndex == 0) && i < 50){
-    message("Filling empty forest pixels: round ", i)
+  while(any(sim$yieldTablesId$yieldTableIndex == 0) && windowSize <= 10){
     Npix <- sum(sim$yieldTablesId$yieldTableIndex == 0, na.rm = T)
-    message(Npix, " pixels to fill.")
-    windowSize = 1 + 2 * i
+    message("Filling empty forest pixels: ", Npix, " pixels to fill.")
     message("Using window size = ", windowSize)
-    focaledYldPixGrMap <- focal(biomassCoresOuts$yieldPixelGroupMap, w = windowSize, fun = "modal", na.rm = TRUE, na.policy="omit")
-    sim$yieldTablesId[yieldTableIndex == 0, "yieldTableIndex"] <- focaledYldPixGrMap[sim$yieldTablesId$yieldTableIndex == 0]
-    biomassCoresOuts$yieldPixelGroupMap[biomassCoresOuts$yieldPixelGroupMap == 0] <- focaledYldPixGrMap[biomassCoresOuts$yieldPixelGroupMap == 0]
+    # replace 0 by NA
+    x <- biomassCoresOuts$yieldPixelGroupMap
+    x[x == 0] <- NA
+    focaledYldPixGrMap <- focal(x, w = windowSize, fun = "modal", na.rm = TRUE, na.policy="only")
+    newClasses <- focaledYldPixGrMap[sim$yieldTablesId$yieldTableIndex == 0]
+    idToReplace <- !is.na(sim$yieldTablesId$yieldTableIndex) & sim$yieldTablesId$yieldTableIndex == 0 & !is.na(focaledYldPixGrMap[])
+    sim$yieldTablesId[idToReplace, ] <- newClasses[!is.na(newClasses)]
+    biomassCoresOuts$yieldPixelGroupMap[idToReplace] <- focaledYldPixGrMap[idToReplace]
     i <- i + 1L
+    if(i %% 3 == 0) {windowSize <- windowSize + 2}
   }
   ####
   sim$yieldTablesId <- sim$yieldTablesId[, pixelIndex := .I] |> na.omit()
