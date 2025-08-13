@@ -34,7 +34,6 @@ runBiomass_core <- function(moduleNameAndBranch, paths, cohortData, maxAge, spec
   modPath <- file.path(paths$modulePath, "Biomass_core")
   filesToDigest <- c(dir(file.path(modPath, "R"), full.names = TRUE), file.path(modPath, "Biomass_core.R"))
   dig1 <- lapply(filesToDigest, function(fn) digest::digest(file = fn))
-  
   dig <- CacheDigest(list(species, cohortDataForYield, timesForYield, dig1))
   simOutputs <- expand.grid(objectName = "cohortData",
                             saveTime = unique(seq(timesForYield$start, timesForYield$end, by = 1)),

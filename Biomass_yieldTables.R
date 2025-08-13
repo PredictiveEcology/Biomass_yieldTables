@@ -108,6 +108,25 @@ GenerateData <- function(sim) {
   sim$yieldTablesId <- data.table(
     yieldTableIndex = as.integer(biomassCoresOuts$yieldPixelGroupMap[])
   )
+  ####
+  windowSize <- 3L
+  i <- 1L
+  while(any(sim$yieldTablesId$yieldTableIndex == 0) && windowSize <= 10){
+    Npix <- sum(sim$yieldTablesId$yieldTableIndex == 0, na.rm = T)
+    message("Filling empty forest pixels: ", Npix, " pixels to fill.")
+    message("Using window size = ", windowSize)
+    # replace 0 by NA
+    x <- biomassCoresOuts$yieldPixelGroupMap
+    x[x == 0] <- NA
+    focaledYldPixGrMap <- focal(x, w = windowSize, fun = "modal", na.rm = TRUE, na.policy="only")
+    newClasses <- focaledYldPixGrMap[sim$yieldTablesId$yieldTableIndex == 0]
+    idToReplace <- !is.na(sim$yieldTablesId$yieldTableIndex) & sim$yieldTablesId$yieldTableIndex == 0 & !is.na(focaledYldPixGrMap[])
+    sim$yieldTablesId[idToReplace, ] <- newClasses[!is.na(newClasses)]
+    biomassCoresOuts$yieldPixelGroupMap[idToReplace] <- focaledYldPixGrMap[idToReplace]
+    i <- i + 1L
+    if(i %% 3 == 0) {windowSize <- windowSize + 2}
+  }
+  ####
   sim$yieldTablesId <- sim$yieldTablesId[, pixelIndex := .I] |> na.omit()
   setcolorder(sim$yieldTablesId, c("pixelIndex", "yieldTableIndex"))
   mod$digest <- biomassCoresOuts$digest
@@ -132,7 +151,7 @@ GenerateYieldTables <- function(sim) {
 PlotYieldTables <- function(sim) {
   fname = paste("Yield Curves from", Par$numPlots,
                 "random plots -", gsub(":", "_", sim$._startClockTime))
-  Plots(AGB = sim$yieldTablesCumulative, usePlot = FALSE, fn = pltfn,
+  Plots(data = sim$yieldTablesCumulative, usePlot = FALSE, fn = pltfn,
         numPlots = Par$numPlots,
         ggsaveArgs = list(width = 10, height = 7),
         filename = fname)
