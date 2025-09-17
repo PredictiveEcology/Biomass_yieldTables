@@ -111,7 +111,7 @@ GenerateData <- function(sim) {
   ####
   windowSize <- 3L
   i <- 1L
-  while(any(sim$yieldTablesId$yieldTableIndex == 0) && windowSize <= 10){
+  while(any(sim$yieldTablesId$yieldTableIndex == 0, na.rm = T) && windowSize <= 10){
     Npix <- sum(sim$yieldTablesId$yieldTableIndex == 0, na.rm = T)
     message("Filling empty forest pixels: ", Npix, " pixels to fill.")
     message("Using window size = ", windowSize)
@@ -123,8 +123,8 @@ GenerateData <- function(sim) {
     idToReplace <- !is.na(sim$yieldTablesId$yieldTableIndex) & sim$yieldTablesId$yieldTableIndex == 0 & !is.na(focaledYldPixGrMap[])
     sim$yieldTablesId[idToReplace, ] <- newClasses[!is.na(newClasses)]
     biomassCoresOuts$yieldPixelGroupMap[idToReplace] <- focaledYldPixGrMap[idToReplace]
-    i <- i + 1L
     if(i %% 3 == 0) {windowSize <- windowSize + 2}
+    i <- i + 1L
   }
   ####
   sim$yieldTablesId <- sim$yieldTablesId[, pixelIndex := .I] |> na.omit()
