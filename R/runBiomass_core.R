@@ -38,7 +38,7 @@ runBiomass_core <- function(moduleNameAndBranch, paths, cohortData, maxAge, spec
   simOutputs <- expand.grid(objectName = "cohortData",
                             saveTime = unique(seq(timesForYield$start, timesForYield$end, by = 1)),
                             eventPriority = 1,
-                            fun = "qs::qsave",
+                            fun = "qs2::qs_save",
                             # fun = "assign", # arguments = list(value = ll),
                             stringsAsFactors = FALSE)
   modulePath <- paste0(paths$modulePath)
