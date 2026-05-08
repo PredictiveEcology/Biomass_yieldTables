@@ -26,6 +26,8 @@ The module has the same inputs as `Biomass_core`. For now, there are no defaults
 
 | Name              | Class      | Description                            | Source          |
 
+## Parameters
+
 
 ## Module functioning
 
