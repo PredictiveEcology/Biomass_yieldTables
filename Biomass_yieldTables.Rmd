@@ -1,73 +1,33 @@
 ---
-title: "Biomass_yieldTables Manual"
-subtitle: "v.`r SpaDES.core::moduleMetadata(module = 'Biomass_yieldTables', path = '..')$version`"
-date: "Last updated: `r Sys.Date()`"
-output:
-  bookdown::html_document2:
-    toc: true
-    toc_float: true
-    theme: sandstone
-    number_sections: false
-    df_print: paged
-    keep_md: yes
-editor_options:
+title: "CBM Spades Manual"
+subtitle: "`r paste('v.', Sys.getenv('SpadesCBM_MAN_VERSION'))`"
+author: "Dominique Caron, Camille Giuliano"
+date: "8 May 2026"
+output: pdf_document
+editor_options: 
   chunk_output_type: console
-  bibliography: citations/references_Biomass_yieldTables.bib
-link-citations: true
-always_allow_html: true
 ---
-
-# Biomass_yieldTables Module
-
-<!-- the following are text references used in captions for LaTeX compatibility -->
-(ref:Biomass-yieldTables) *Biomass_yieldTables*
-
-```{r setup-Biomass-yieldTables, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, eval = FALSE, results = "hold") ## change to eval = TRUE if all chunks are to be evaluated
-
-dir.create("figures", showWarnings = FALSE)
-
-download.file(url = "https://img.shields.io/badge/Made%20with-Markdown-1f425f.png",
-              destfile = "figures/markdownBadge.png",
-              mode = 'wb')
+```{r setup-CBM_core, include = FALSE}
 ```
 
-[![made-with-Markdown](figures/markdownBadge.png)](https://commonmark.org)
+# Biomass_yieldTables
 
-<!-- if knitting to pdf remember to add the pandoc_args: ["--extract-media", "."] option to yml in order to get the badge images -->
+:::{.rmdimportant}
+This documentation is work in progress. Potential discrepancies and omissions may exist for the time being. If you find any, please contact us [here]("https://github.com/PredictiveEcology/Biomass_yieldTables/issues").
+:::
 
-#### Authors:
-
-`r paste(as.character(SpaDES.core::moduleMetadata(module = "Biomass_yieldTables", path = '..')$authors), sep = ', ')`
-<!-- ideally separate authors with new lines, '\n' not working -->
-
-## Module Overview
-
-### Module summary
+## Overview
 
 The objective of this module is to produce yield curves for a user-specified study area from `LandR` simulations. To do so, the module initialize the landscape keeping species composition, but setting all biomass to 1 and ages 0. The module `Biomass_core` is then run internally without dispersal and disturbances to simulate vegetation dynamics from year 0 until all species dies out (i.e., maximum longevity among all species). The module records the above ground biomass of each species, in each pixel, at each time step to build yield tables that take into account species traits and competition.
 
-### Module inputs and parameters
+## Inputs
 
 The module has the same inputs as `Biomass_core`. For now, there are no defaults for the inputs, and the user either need to provide all the inputs needed or use the module with other modules that would prepare the inputs (e.g., `Biomass_borealDataPrep`).
 
-Table \@ref(tab:moduleInputs-Biomass-yieldTables) shows the full list of module inputs.
-
-```{r moduleInputs-Biomass-yieldTables, echo = FALSE, eval = TRUE, message = FALSE, warning = FALSE}
-df_inputs <- SpaDES.core::moduleInputs("Biomass_yieldTables", "C:/Users/docaron/Documents")
-knitr::kable(df_inputs,
-             caption = "List of (ref:Biomass-yieldTables) input objects and their description.") |>
-  kableExtra::kable_styling(latex_options = "scale_down", full_width = TRUE)
-```
-
-Table \@ref(tab:moduleParams-Biomass-yieldTables)
+| Name              | Class      | Description                            | Source          |
 
 
-```{r moduleParams-Biomass-yieldTables, echo = FALSE, eval = TRUE, message = FALSE, warning = FALSE}
-df_params <- SpaDES.core::moduleParams("Biomass_yieldTables", "C:/Users/docaron/Documents")
-knitr::kable(df_params, caption = "List of (ref:Biomass-yieldTables) parameters and their description.") |>
-  kableExtra::kable_styling(latex_options = "scale_down", full_width = TRUE)
-```
+## Module functioning
 
 ### Events
 
@@ -85,19 +45,11 @@ By default, the module plots the yield table for 40 set of growth curves (a set 
 
 The module also plots the maps the `yieldTableIndex`. Each forested pixel has a `yieldTableIndex` referencing the set of growth curve for this pixel.
 
-### Saving
 
-Nothing gets saved.
+### Outputs
 
-### Module outputs
+| Name              | Class      | Description                                                     |
 
-Table \@ref(tab:moduleOutputs-Biomass-yieldTables).
-
-```{r moduleOutputs-Biomass-yieldTables, echo = FALSE, eval = TRUE, message = FALSE, warning = FALSE}
-df_outputs <- SpaDES.core::moduleOutputs("Biomass_yieldTables", "C:/Users/docaron/Documents")
-knitr::kable(df_outputs, caption = "List of (ref:Biomass-yieldTables) outputs and their description.") |>
-  kableExtra::kable_styling(latex_options = "scale_down", full_width = TRUE)
-```
 
 ### Links to other modules
 
@@ -109,9 +61,4 @@ The yield tables created by this module as inputs for module that need growth cu
 
 An example of a workflow to build yield tables for the RIA study area (Northeast British-Columbia) can be found in the script `global_LandRyieldTables.R` of the repository [LandRCBM](https://github.com/DominiqueCaron/LandRCBM).
 
-### Things to do
-
-1. Better define the inputs. Only the object `cohortData` (biomass of each cohort within pixel groups), `species` (species traits), and `rasterToMatch` are describe in the metadata, and there are no default values. In theory, a user could provide any of the inputs needed to run `Biomass_core`. Since there are no default values, the module cannot be run as a standalone and needs to be run with a data preparation module or the user needs to provide a `simList` with the needed objects to run `Biomass_core`.
-
-2. `Biomass_yieldTables` clones `Biomass_core` in the submodules folder. When `Biomass_core` is already in the project (e.g., if it uses `Biomass_speciesFactorial`, which also clone `Biomass_core`, and/or `Biomass_core`) it shouldn't be necessary to clone it again.
 
