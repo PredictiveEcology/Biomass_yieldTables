@@ -25,9 +25,10 @@ The objective of this module is to produce yield curves for a user-specified stu
 The module has the same inputs as `Biomass_core`. For now, there are no defaults for the inputs, and the user either need to provide all the inputs needed or use the module with other modules that would prepare the inputs (e.g., `Biomass_borealDataPrep`).
 
 | Name              | Class      | Description                            | Source          |
-
-## Parameters
-
+|-------------------|------------|----------------------------------------|-----------------|
+| cohortData        | Data table | Table with cohort-level attributes     | Biomass_borealDataPrep |
+| species           | Data table | Table of invariant species traits      | Biomass_borealDataPrep |
+| rasterToMatch     | SpatRaster | Template raster to use for simulations | User provided   |
 
 ## Module functioning
 
@@ -51,6 +52,9 @@ The module also plots the maps the `yieldTableIndex`. Each forested pixel has a 
 ### Outputs
 
 | Name              | Class      | Description                                                     |
+|-------------------|------------|-----------------------------------------------------------------|
+| yieldTablesCumulative | Data table | Yield tables intended to supply CBM spinup requirements     |
+| yieldTablesId     | Data table | Table spatially linking yield tables to pixels                  |
 
 
 ### Links to other modules
