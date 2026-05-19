@@ -57,6 +57,102 @@ The module also plots the maps the `yieldTableIndex`. Each forested pixel has a 
 | yieldTablesId     | Data table | Table spatially linking yield tables to pixels                  |
 
 
+### Usage
+
+Here is an example of a workflow to build yield tables for the RIA study area (Northeast British-Columbia). Note that you will need data permissions for permanent sample plot and inventory data to run this global. If you have permissions, be sure to sign into the appropriate Google account. 
+
+
+```
+repos <- c("predictiveecology.r-universe.dev", getOption("repos"))
+if (!require("SpaDES.project")){
+  Require::Install(c("SpaDES.project", "SpaDES.core", "reproducible"), repos = repos, dependencies = TRUE)
+}
+
+getRIA <- function(x) {
+  x <- sf::st_read(x) 
+  ria <- x[x$TSA_NUMBER %in% c('08', '16', '24', '40', '41'),]
+  ria <- sf::st_union(ria)|> sf::st_as_sf()
+  return(ria)
+}
+
+out <- SpaDES.project::setupProject(
+  paths = list(projectPath = getwd(),
+               inputPath = "~/inputs",
+               outputPath = "outputs/yieldTables",
+               cachePath = "cache"),
+  options = options(spades.moduleCodeChecks = FALSE,
+                    spades.recoveryMode = FALSE),
+  times = list(start = 2020, end = 2020),
+  modules = c("PredictiveEcology/Biomass_speciesFactorial@development",
+              "PredictiveEcology/Biomass_borealDataPrep@development",
+              "PredictiveEcology/Biomass_speciesParameters@development",
+              "PredictiveEcology/Biomass_yieldTables@main"
+  ),
+  params = list(
+    .globals = list(
+      .plots = c("png"),
+      .plotInterval = 10,
+      sppEquivCol = 'LandR',
+      .studyAreaName = "RIAsmall"
+    ),
+    Biomass_borealDataPrep = list(
+      .studyAreaName = "RIA",
+      subsetDataBiomassModel = 50
+    ),
+    Biomass_speciesFactorial = list(
+      .plots = NULL, #"pdf",
+      runExperiment = TRUE,
+      factorialSize = "medium"
+    ),
+    Biomass_speciesParameters = list(
+      .plots = "png",
+      standAgesForFitting = c(0, 125),
+      .useCache = c(".inputObjects", "init"),
+      speciesFittingApproach = "focal"
+    ),
+    Biomass_yieldTables = list(
+      moduleNameAndBranch = "PredictiveEcology/Biomass_core@development",
+      maxAge = 150,
+      .plots = "png",
+      .useCache = "generateData"
+    )
+  ),
+  packages = c("googledrive", 'RCurl', 'XML', "stars"),
+  useGit = F,
+  functions = getRIA,
+  # Study area is within RIA (RIA buffered 150km inward)
+  studyArea = {
+    reproducible::prepInputs(
+      url = "https://drive.google.com/file/d/1LxacDOobTrRUppamkGgVAUFIxNT4iiHU/view?usp=sharing",
+      destinationPath = "inputs",
+      fun = getRIA,
+      overwrite = TRUE
+    ) |> sf::st_buffer(dist = -150000)
+  },
+  studyAreaLarge = studyArea,
+  rasterToMatch = {
+    sa <- terra::vect(studyArea)
+    targetCRS <- terra::crs(sa)
+    rtm <- terra::rast(sa, res = c(250, 250), crs = targetCRS)
+    rtm[] <- 1
+    rtm <- terra::mask(rtm, sa)
+    rtm
+  },
+  sppEquiv = {
+    speciesInStudy <- LandR::speciesInStudyArea(studyAreaLarge,
+                                                dPath = "inputs")
+    species <- LandR::equivalentName(speciesInStudy$speciesList, df = LandR::sppEquivalencies_CA, "LandR")
+    sppEquiv <- LandR::sppEquivalencies_CA[LandR %in% species]
+    sppEquiv <- sppEquiv[KNN != "" & LANDIS_traits != ""] #avoid a bug with shore pine
+  }
+)
+
+out$loadOrder <- unlist(out$modules)
+
+initOut <- SpaDES.core::simInit2(out)
+simOut <- SpaDES.core::spades(initOut)
+```
+
 ### Links to other modules
 
 - [CBM_defaults](https://github.com/PredictiveEcology/CBM_defaults)
