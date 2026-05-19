@@ -94,7 +94,7 @@ out <- SpaDES.project::setupProject(
     ),
     Biomass_speciesParameters = list(
       .plots = "png",
-      standAgesForFitting = c(0, 125),
+      standAgesForFitting = c(0, 110),
       .useCache = c(".inputObjects", "init"),
       speciesFittingApproach = "focal"
     ),
