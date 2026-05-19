@@ -18,11 +18,11 @@ This documentation is work in progress. Potential discrepancies and omissions ma
 
 ## Overview
 
-The objective of this module is to produce yield curves for a user-specified study area from `LandR` simulations. To do so, the module initialize the landscape keeping species composition, but setting all biomass to 1 and ages 0. The module `Biomass_core` is then run internally without dispersal and disturbances to simulate vegetation dynamics from year 0 until all species dies out (i.e., maximum longevity among all species). The module records the above ground biomass of each species, in each pixel, at each time step to build yield tables that take into account species traits and competition.
+[Biomass_yieldTables](https://github.com/PredictiveEcology/Biomass_yieldTables) produces the biomass yield curves for cohorts on a user-specified study area from [LandR](https://landr-manual.predictiveecology.org/) simulations for use as increments to simulate carbon dynamics in [spadesCBM](https://github.com/PredictiveEcology/spadesCBM.git). The [module](https://predictiveecology.github.io/LandRCBM/lexicon.html#modules) initialize the landscape keeping species composition, but setting all biomass to 1 and ages 0. The module `Biomass_core` is then run internally without dispersal and disturbances to simulate vegetation dynamics from year 0 until all species dies out (i.e., maximum longevity among all species). The module records the above ground biomass of each species, in each pixel, at each time step to build yield tables that take into account species traits and competition.
 
 ## Inputs
 
-The module has the same inputs as `Biomass_core`. For now, there are no defaults for the inputs, and the user either need to provide all the inputs needed or use the module with other modules that would prepare the inputs (e.g., `Biomass_borealDataPrep`).
+For now, there are no defaults for the inputs, and the user either need to provide all the inputs themselves or run the module alognside other modules that can generate the expected inputs (e.g., `Biomass_borealDataPrep`). 
 
 | Name              | Class      | Description                            | Source          |
 |-------------------|------------|----------------------------------------|-----------------|
@@ -34,19 +34,7 @@ The module has the same inputs as `Biomass_core`. For now, there are no defaults
 
 ### Events
 
-Everything that the module does is in the `init` event: 
-
-1. The module initializes the landscape keeping the species present in each pixel, and setting all species ages to 0 and biomass to 1.
-2. New pixel groups are created for pixels that shares the same species composition and ecoregion, these pixel groups will becomre the `yieldTableIndex`.
-3. Vegetation dynamics is simulated by running `Biomass_core` internally. The object `cohortData` is saved each year.
-4. The `cohortData` files saved in step 2 are loaded and combined to create the yield tables.
-5. The module plots the resulting `yieldTables`.
-
-### Plotting
-
-By default, the module plots the yield table for 40 set of growth curves (a set of growth curve being the growth of all species coexisting in a given pixel, named `yieldTableIndex`). The number of set of growth curves can be changed with the parameter `numPlots`. 
-
-The module also plots the maps the `yieldTableIndex`. Each forested pixel has a `yieldTableIndex` referencing the set of growth curve for this pixel.
+This [module](https://predictiveecology.github.io/LandRCBM/lexicon.html#modules) only has a single [event](https://predictiveecology.github.io/LandRCBM/lexicon.html#events), the `init` event. Here the module initializes the landscape, keeping appropriate species present in each pixel and setting all ages 0 and biomass to 1. New pixel groups are then created for pixels that share the same species composition and ecoregion, these groups will then become the `yieldTableIndex`. Vegetation dynamics are simulated by running `Biomass_core` internally and the `cohortData` object is saved each year. `cohortData` objects for each year are then loaded and combined to create the yield tables, which are plotted and saved in the `ouputs` folder. 
 
 
 ### Outputs
