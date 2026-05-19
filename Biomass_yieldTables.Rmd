@@ -59,7 +59,7 @@ The module also plots the maps the `yieldTableIndex`. Each forested pixel has a 
 
 ### Usage
 
-Here is an example of a workflow to build yield tables for the RIA study area (Northeast British-Columbia). Note that you will need data permissions for permanent sample plot and inventory data to run this global. If you have permissions, be sure to sign into the appropriate Google account. 
+Here is an example of a workflow to build yield tables for the RIA study area (Northeast British-Columbia). Note that you will need data permissions for permanent sample plot and inventory data to run this global. If you have permissions, be sure to sign into the appropriate Google account. Note that this global requires some large files and an initial run will take some time to download them. 
 
 
 ```
