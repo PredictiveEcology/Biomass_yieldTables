@@ -34,7 +34,7 @@ For now, there are no defaults for the inputs, and the user either need to provi
 
 ### Events
 
-This [module](https://predictiveecology.github.io/LandRCBM/lexicon.html#modules) only has a single [event](https://predictiveecology.github.io/LandRCBM/lexicon.html#events), the `init` event. Here the module initializes the landscape, keeping appropriate species present in each pixel and setting all ages 0 and biomass to 1. New pixel groups are then created for pixels that share the same species composition and ecoregion, these groups will then become the `yieldTableIndex`. Vegetation dynamics are simulated by running `Biomass_core` internally and the `cohortData` object is saved each year. `cohortData` objects for each year are then loaded and combined to create the yield tables, which are plotted and saved in the `ouputs` folder. 
+This [module](https://predictiveecology.github.io/LandRCBM/lexicon.html#modules) only has one [event](https://predictiveecology.github.io/LandRCBM/lexicon.html#events), the `init` event. Here the module initializes the landscape, keeping appropriate species present in each pixel and setting all ages 0 and biomass to 1. New pixel groups are then created for pixels that share the same species composition and ecoregion, these groups will then become the `yieldTableIndex`. Vegetation dynamics are simulated by running `Biomass_core` internally and the `cohortData` object is saved each year. `cohortData` objects for each year are then loaded and combined to create the yield tables, which are plotted and saved in the `ouputs` folder. 
 
 
 ### Outputs
