@@ -18,7 +18,7 @@ This documentation is work in progress. Potential discrepancies and omissions ma
 
 ## Overview
 
-[Biomass_yieldTables](https://github.com/PredictiveEcology/Biomass_yieldTables) produces the biomass yield curves for cohorts on a user-specified study area from [LandR](https://landr-manual.predictiveecology.org/). The [module](https://predictiveecology.github.io/LandRCBM/lexicon.html#modules) initialize the landscape keeping species composition, but setting all biomass to 1 and ages 0. The module `Biomass_core` is then run internally without dispersal and disturbances to simulate vegetation dynamics from year 0 until all species dies out (i.e., maximum longevity among all species). The module records the aboveground biomass of each species, in each pixel, at each time step to build yield tables that take into account species traits and competition.
+[Biomass_yieldTables](https://github.com/PredictiveEcology/Biomass_yieldTables) produces the biomass yield curves for cohorts on a user-specified study area from [LandR](https://landr-manual.predictiveecology.org/). The [module](https://predictiveecology.github.io/LandRCBM/lexicon.html#modules) initializes the landscape keeping species composition, but setting all biomass to 1 and ages to 0. The module `Biomass_core` is then run internally without dispersal and disturbances to simulate vegetation dynamics from year 0 until all species dies out (i.e., maximum longevity among all species). The module records the aboveground biomass of each species, in each pixel, at each time step to build yield tables that take into account species traits and competition.
 
 ## Inputs
 
@@ -34,7 +34,7 @@ The module needs the inputs to run `Biomass_core`. For now, there are no default
 
 ### Events
 
-This [module](https://predictiveecology.github.io/LandRCBM/lexicon.html#modules) only has one [event](https://predictiveecology.github.io/LandRCBM/lexicon.html#events), the `init` event. Here, the module initializes the landscape, keeping appropriate species present in each pixel and setting all ages 0 and biomass to 1. New pixel groups are then created for pixels that share the same species composition and ecoregion, these groups will then become the `yieldTableIndex`. Vegetation dynamics are simulated by running `Biomass_core` internally and the `cohortData` object is saved each year. `cohortData` objects for each year are then loaded and combined to create the yield tables, which are plotted and saved in the `ouputs` folder. 
+This [module](https://predictiveecology.github.io/LandRCBM/lexicon.html#modules) only has one [event](https://predictiveecology.github.io/LandRCBM/lexicon.html#events), the `init` event. Here, the module initializes the landscape, keeping appropriate species present in each pixel and setting all ages to 0 and biomass to 1. New pixel groups are created for pixels based species composition and ecoregion. These pixel groups will share the same yield curves and will become the `yieldTableIndex`. Vegetation dynamics are simulated by running `Biomass_core` internally and the `cohortData` object is saved each year. Finally, `cohortData` objects for each year are loaded and combined to create the yield tables. The resulting yield curves for a random set of pixel groups are plotted and saved in the `ouputs` folder. 
 
 
 ### Outputs
