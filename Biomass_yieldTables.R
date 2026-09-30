@@ -15,12 +15,13 @@ defineModule(sim, list(
     person("Eliot", "McIntire", email = "eliot.mcintire@nrcan-rncan.gc.ca", role = c("aut", "cre"))
   ),
   childModules = character(0),
-  version = list(Biomass_yieldTables = "0.0.8"),
+  version = list(Biomass_yieldTables = "0.0.8.9000"),
   timeframe = as.POSIXlt(c(NA, NA)),
   timeunit = "year",
   citation = list("citation.bib"),
   documentation = deparse(list("README.md", "Biomass_yieldTables.Rmd")), ## same file
-  reqdPkgs = list("data.table", "PredictiveEcology/SpaDES.core@development (>= 1.0.9.9008)", "LandR", "terra"),
+  reqdPkgs = list("crayon", "data.table", "digest", "ggplot2", "LandR", "reproducible", "SpaDES.project",
+                  "PredictiveEcology/SpaDES.core@development (>= 1.0.9.9008)", "terra"),
   parameters = rbind(
     defineParameter(".useCache", "character", c("generateData", "generateYieldTables"), NA, NA,
                     "Should caching of events or module be used?"),
