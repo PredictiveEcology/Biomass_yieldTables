@@ -37,33 +37,35 @@ test_that("function runBiomass_core works", {
   #   studyAreaLarge = studyArea,
   #   sppNameVector = c("Abie_las", "Popu_tre")
   # )
+  skip_on_cran()
+  skip_if_offline() # runBiomass_core() downloads Biomass_core from GitHub
+
   updateFactorialOutputs = FALSE
-  simOut <- suppressWarnings(
-    SpaDES.core::loadSimList(file.path(spadesTestPaths$testdata, "smallSimOut.zip"),
-                             projectPath = spadesTestPaths$temp$projects)
+  simOut <- loadSmallSim()
+  # Biomass_core is downloaded into modulePath
+  paths <- list(
+    modulePath = file.path(dirname(testPaths$inputPath), "submodules"),
+    inputPath  = testPaths$inputPath,
+    outputPath = testPaths$outputPath
   )
   
   out <- runBiomass_core(moduleNameAndBranch ="PredictiveEcology/Biomass_core@main", 
-                         paths = list(
-                           modulePath  = file.path(spadesTestPaths$temp$modules, "Biomass_yieldTables", "submodules"),
-                           inputPath   = spadesTestPaths$temp$inputs,
-                           outputPath = spadesTestPaths$temp$outputs
-                         ),
+                         paths = paths,
                          cohortData = simOut$cohortData,
                          species = simOut$species,
                          maxAge = NA,
                          simEnv = envir(simOut))
   
   if(updateFactorialOutputs) {
-    cohortDataDir <- file.path(spadesTestPaths$testdata, "smallSimOut_cohortDataYield")
+    cohortDataDir <- test_path("testdata", "smallSimOut_cohortDataYield")
     copyDirectory(
-      from = file.path(spadesTestPaths$temp$outputs, "cohortDataYield"),
+      from = file.path(testPaths$outputPath, "cohortDataYield"),
       to = cohortDataDir,
       overwrite = TRUE
     )
     factorialOutputs <- out$simOutputs
     factorialOutputs$file <- file.path("testdata", "smallSimOut_cohortDataYield", list.files(cohortDataDir))
-    fwrite(factorialOutputs, file.path(spadesTestPaths$testdata, "factorialOutputs.csv"))
+    fwrite(factorialOutputs, test_path("testdata", "factorialOutputs.csv"))
   }
   
   
@@ -83,11 +85,7 @@ test_that("function runBiomass_core works", {
   
   
   out <- runBiomass_core(moduleNameAndBranch ="PredictiveEcology/Biomass_core@main", 
-                         paths = list(
-                           modulePath  = file.path(spadesTestPaths$temp$modules, "Biomass_yieldTables", "submodules"),
-                           inputPath   = spadesTestPaths$temp$inputs,
-                           outputPath = spadesTestPaths$temp$outputs
-                         ),
+                         paths = paths,
                          cohortData = simOut$cohortData,
                          species = simOut$species,
                          maxAge = 20,
@@ -96,11 +94,7 @@ test_that("function runBiomass_core works", {
   
   
   out <- runBiomass_core(moduleNameAndBranch ="PredictiveEcology/Biomass_core@main", 
-                         paths = list(
-                           modulePath  = file.path(spadesTestPaths$temp$modules, "Biomass_yieldTables", "submodules"),
-                           inputPath   = spadesTestPaths$temp$inputs,
-                           outputPath = spadesTestPaths$temp$outputs
-                         ),
+                         paths = paths,
                          cohortData = simOut$cohortData,
                          species = simOut$species,
                          maxAge = 1000,
