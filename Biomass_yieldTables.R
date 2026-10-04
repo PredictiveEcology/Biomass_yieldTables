@@ -22,7 +22,11 @@ defineModule(sim, list(
   documentation = deparse(list("README.md", "Biomass_yieldTables.Rmd")), ## same file
   reqdPkgs = list("crayon", "data.table", "digest", "ggplot2", "PredictiveEcology/LandR@development", "reproducible",
                   "PredictiveEcology/SpaDES.project@development",
-                  "PredictiveEcology/SpaDES.core@development (>= 1.0.9.9008)", "terra"),
+                  "PredictiveEcology/SpaDES.core@development (>= 1.0.9.9008)", "terra",
+                  ## Biomass_core, which this module runs internally, needs these too
+                  "assertthat", "dplyr", "fpCompare", "purrr", "quickPlot", "Rcpp", "R.utils",
+                  "scales", "SpaDES.tools", "tidyr", "ianmseddy/LandR.CS@master",
+                  "PredictiveEcology/pemisc@development"),
   parameters = rbind(
     defineParameter(".useCache", "character", c("generateData", "generateYieldTables"), NA, NA,
                     "Should caching of events or module be used?"),
