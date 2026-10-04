@@ -15,17 +15,18 @@ test_that("initYieldCohorts starts cohorts at initialB and age 1, as Biomass_cor
 })
 
 test_that("yield tables start at initialB and age 1", {
-  simOut <- suppressWarnings(
-    SpaDES.core::loadSimList(file.path(spadesTestPaths$testdata, "smallSimOut.zip"),
-                             projectPath = spadesTestPaths$temp$projects)
+  skip_on_cran()
+  skip_if_offline() # runBiomass_core() downloads Biomass_core from GitHub
+
+  simOut <- loadSmallSim()
+  paths <- list(
+    modulePath = file.path(dirname(testPaths$inputPath), "submodules"),
+    inputPath  = testPaths$inputPath,
+    outputPath = testPaths$outputPath
   )
   initialB <- 10
   out <- runBiomass_core(moduleNameAndBranch = "PredictiveEcology/Biomass_core@main",
-                         paths = list(
-                           modulePath  = file.path(spadesTestPaths$temp$modules, "Biomass_yieldTables", "submodules"),
-                           inputPath   = spadesTestPaths$temp$inputs,
-                           outputPath = spadesTestPaths$temp$outputs
-                         ),
+                         paths = paths,
                          cohortData = simOut$cohortData,
                          species = simOut$species,
                          maxAge = 3,
