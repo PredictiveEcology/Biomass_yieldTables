@@ -1,10 +1,7 @@
 test_that("module runs with small example", {
-  
-  # Set project path
-  projectPath <- file.path(spadesTestPaths$temp$projects, "5-Biomass_yieldTables")
-  dir.create(projectPath)
-  withr::local_dir(projectPath)
-  
+  skip_on_cran()
+  skip_if_offline() # the module downloads Biomass_core from GitHub
+
   # This runs the module with a simList created by the modules biomass_borealDataPrep.
   
   # The study area is a ~10 km^2 a located in Northeast BC with a 250m resolution
@@ -42,39 +39,27 @@ test_that("module runs with small example", {
   #   sppNameVector = c("Abie_las", "Popu_tre")
   # )
   
-  module <- "Biomass_yieldTables"
-  simOut <- suppressWarnings(
-    SpaDES.core::loadSimList(file.path(spadesTestPaths$testdata, "smallSimOut.zip"),
-                                     projectPath = spadesTestPaths$temp$projects)
-  )
+  module <- moduleName
+  simOut <- loadSmallSim()
   outs <- lapply(objects(simOut), function(x) simOut[[x]])
   names(outs) <- objects(simOut)
-  
-  simInitInput <-  SpaDEStestMuffleOutput(
-    SpaDES.project::setupProject(
+
+  simTestInit <- suppressMessages(
+    SpaDES.core::simInit(
       modules = module,
-      paths   = list(
-        projectPath = projectPath,
-        modulePath  = spadesTestPaths$temp$modules,
-        inputPath   = spadesTestPaths$temp$inputs,
-        outputPath = spadesTestPaths$temp$outputs
-      ),
-      params = list(
-        #.progress = list(type = graphical, interval = 1),
+      paths   = testPaths,
+      params  = list(
         .globals = list(verbose = FALSE),
         Biomass_yieldTables = list(.saveInitialTime = NA)
       ),
       objects = outs
     )
   )
-  simTestInit <-  SpaDEStestMuffleOutput(
-    SpaDES.core::simInit2(simInitInput)
-  )
-  
+
   # is output a simList?
   expect_s4_class(simTestInit, "simList")
   
-  simTest <-  SpaDEStestMuffleOutput(
+  simTest <- suppressMessages(
     SpaDES.core::spades(simTestInit, debug = FALSE)
   )
   # is output a simList?
