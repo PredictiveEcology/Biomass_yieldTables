@@ -20,7 +20,8 @@ defineModule(sim, list(
   timeunit = "year",
   citation = list("citation.bib"),
   documentation = deparse(list("README.md", "Biomass_yieldTables.Rmd")), ## same file
-  reqdPkgs = list("crayon", "data.table", "digest", "ggplot2", "LandR", "reproducible", "SpaDES.project",
+  reqdPkgs = list("crayon", "data.table", "digest", "ggplot2", "PredictiveEcology/LandR@development", "reproducible",
+                  "PredictiveEcology/SpaDES.project@development",
                   "PredictiveEcology/SpaDES.core@development (>= 1.0.9.9008)", "terra"),
   parameters = rbind(
     defineParameter(".useCache", "character", c("generateData", "generateYieldTables"), NA, NA,
