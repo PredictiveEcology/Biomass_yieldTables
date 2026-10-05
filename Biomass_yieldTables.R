@@ -15,7 +15,7 @@ defineModule(sim, list(
     person("Eliot", "McIntire", email = "eliot.mcintire@nrcan-rncan.gc.ca", role = c("aut", "cre"))
   ),
   childModules = character(0),
-  version = list(Biomass_yieldTables = "0.0.8.9001"),
+  version = list(Biomass_yieldTables = "0.0.8.9002"),
   timeframe = as.POSIXlt(c(NA, NA)),
   timeunit = "year",
   citation = list("citation.bib"),
