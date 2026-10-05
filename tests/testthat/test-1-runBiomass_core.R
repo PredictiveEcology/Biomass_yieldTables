@@ -54,8 +54,7 @@ test_that("function runBiomass_core works", {
                          cohortData = simOut$cohortData,
                          species = simOut$species,
                          maxAge = NA,
-                         simEnv = envir(simOut),
-                         initialB = 10)
+                         simEnv = envir(simOut))
   
   if(updateFactorialOutputs) {
     cohortDataDir <- test_path("testdata", "smallSimOut_cohortDataYield")
@@ -90,8 +89,7 @@ test_that("function runBiomass_core works", {
                          cohortData = simOut$cohortData,
                          species = simOut$species,
                          maxAge = 20,
-                         simEnv = envir(simOut),
-                         initialB = 10)
+                         simEnv = envir(simOut))
   expect_equal(nrow(out$simOutputs), 21)
   
   
@@ -100,8 +98,7 @@ test_that("function runBiomass_core works", {
                          cohortData = simOut$cohortData,
                          species = simOut$species,
                          maxAge = 1000,
-                         simEnv = envir(simOut),
-                         initialB = 10)
+                         simEnv = envir(simOut))
   expect_true(nrow(out$simOutputs) == max(simOut$species$longevity)+1)
   
   

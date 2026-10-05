@@ -1,14 +1,15 @@
 
 
-runBiomass_core <- function(moduleNameAndBranch, paths, cohortData, maxAge, species, simEnv, initialB) {
+runBiomass_core <- function(moduleNameAndBranch, paths, cohortData, maxAge, species, simEnv) {
   # get modules if using stand alone module
   if (!is.null(moduleNameAndBranch)) {
     getModule(moduleNameAndBranch, modulePath = paths$modulePath, overwrite = TRUE) # will only overwrite if wrong version
   }
   speciesNameConvention <- LandR::equivalentNameColumn(species$species, LandR::sppEquivalencies_CA)
-  # initialize all cohorts as Biomass_core does new cohorts (age 1, biomass of initialB),
-  # and simulation time to largest longevity
-  cohortDataForYield <- initYieldCohorts(cohortData, initialB)
+  # initialize all cohorts to age 0, biomass of 1, and simulation time to largest longevity
+  cohortDataForYield <- copy(cohortData)
+  cohortDataForYield$B <- 1L
+  cohortDataForYield$age <- 0L
   
   
   endTime <- ifelse(is.na(maxAge), 
@@ -65,7 +66,6 @@ runBiomass_core <- function(moduleNameAndBranch, paths, cohortData, maxAge, spec
       , "calcSummaryBGM" = NULL
       , "seedingAlgorithm" = "noSeeding"
       , "minCohortBiomass" = 1
-      , "initialB" = initialB
     )
   )
   paths$outputPath <- file.path(paths$outputPath, "cohortDataYield")
@@ -81,17 +81,6 @@ runBiomass_core <- function(moduleNameAndBranch, paths, cohortData, maxAge, spec
   )
   
   list(simOutputs = simOutputs, digest = dig, yieldPixelGroupMap = objects$pixelGroupMap)
-}
-
-#' Start cohorts as Biomass_core starts new cohorts: age 1 and biomass `initialB`.
-#' @param cohortData a `cohortData` table.
-#' @param initialB numeric, the `initialB` parameter passed on to Biomass_core.
-#' @return a copy of `cohortData` with `B` and `age` reset.
-initYieldCohorts <- function(cohortData, initialB) {
-  cohortDataForYield <- copy(cohortData)
-  cohortDataForYield$B <- as.integer(round(initialB))
-  cohortDataForYield$age <- 1L
-  cohortDataForYield
 }
 
 simInitAndSpadesClearEnv <- function(...) {
