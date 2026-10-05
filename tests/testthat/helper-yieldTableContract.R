@@ -5,7 +5,8 @@
 ##   annual increments as c(0, diff(B)) from it, and CBM_core joins increments to cohorts by
 ##   (gcID, age), including age-0 cohorts after disturbance.
 ## - Ages then run 0, 1, 2, ... with no gaps or repeats, so row i is year i of growth.
-## - Biomass is never negative.
+## - Biomass is never negative, and no table goes past maxAge (a table ends when its cohort
+##   dies, so tables can end earlier).
 ##
 ## Returns the rules that `yt` breaks (character(0) if none).
 yieldTableViolations <- function(yt, maxAge = NULL) {
@@ -17,7 +18,7 @@ yieldTableViolations <- function(yt, maxAge = NULL) {
     if (!all(perTable$nAges == perTable$n)) "repeated ages",
     if (!all(perTable$n == perTable$maxAge - perTable$minAge + 1L)) "gaps in ages",
     if (any(yt$biomass < 0)) "negative biomass",
-    if (!is.null(maxAge) && !all(perTable$maxAge == maxAge)) "last age is not maxAge"))
+    if (!is.null(maxAge) && any(perTable$maxAge > maxAge)) "ages beyond maxAge"))
 }
 
 expectYieldTableContract <- function(yt, maxAge = NULL) {
