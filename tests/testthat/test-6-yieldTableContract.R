@@ -25,8 +25,9 @@ test_that("repeated age-0 rows (Biomass_core holds age 0 until reclassification)
   expect_true("repeated ages" %in% yieldTableViolations(yt))
 })
 
-test_that("a gap in ages, negative biomass and a short table break it", {
+test_that("a gap in ages, negative biomass and ages past maxAge break it", {
   expect_identical(yieldTableViolations(ytGood()[age != 2]), "gaps in ages")
   expect_identical(yieldTableViolations(ytGood()[age == 3, biomass := -1L]), "negative biomass")
-  expect_identical(yieldTableViolations(ytGood(), maxAge = 5L), "last age is not maxAge")
+  expect_identical(yieldTableViolations(ytGood(), maxAge = 2L), "ages beyond maxAge")
+  expect_identical(yieldTableViolations(ytGood(), maxAge = 5L), character(0)) # tables may end before maxAge
 })
