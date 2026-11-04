@@ -3,7 +3,9 @@ title: "LandRCBM Manual"
 subtitle: "`r paste('v.', Sys.getenv('SpadesCBM_MAN_VERSION'))`"
 author: "Dominique Caron, Camille Giuliano"
 date: "May 25, 2026"
-output: pdf_document
+output:
+  html_document:
+    keep_md: yes
 editor_options: 
   chunk_output_type: console
 ---
