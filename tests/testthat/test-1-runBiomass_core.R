@@ -54,7 +54,8 @@ test_that("function runBiomass_core works", {
                          cohortData = simOut$cohortData,
                          species = simOut$species,
                          maxAge = NA,
-                         simEnv = envir(simOut))
+                         simEnv = envir(simOut),
+                         initialB = 10)
   
   if(updateFactorialOutputs) {
     cohortDataDir <- test_path("testdata", "smallSimOut_cohortDataYield")
@@ -81,7 +82,8 @@ test_that("function runBiomass_core works", {
   expect_true(all(out$simOutputs$objectName == "cohortData"))
   expect_true(all(out$simOutputs$saveTime == c(1:nrow(out$simOutputs)-1)))
   expect_true(all(out$simOutputs$saved))
-  expect_true(nrow(out$simOutputs) == max(simOut$species$longevity)+1)
+  # cohorts start at age 1, so saveTime t holds age t + 1
+  expect_true(nrow(out$simOutputs) == max(simOut$species$longevity))
   
   
   out <- runBiomass_core(moduleNameAndBranch ="PredictiveEcology/Biomass_core@main", 
@@ -89,8 +91,9 @@ test_that("function runBiomass_core works", {
                          cohortData = simOut$cohortData,
                          species = simOut$species,
                          maxAge = 20,
-                         simEnv = envir(simOut))
-  expect_equal(nrow(out$simOutputs), 21)
+                         simEnv = envir(simOut),
+                         initialB = 10)
+  expect_equal(nrow(out$simOutputs), 20)
   
   
   out <- runBiomass_core(moduleNameAndBranch ="PredictiveEcology/Biomass_core@main", 
@@ -98,8 +101,9 @@ test_that("function runBiomass_core works", {
                          cohortData = simOut$cohortData,
                          species = simOut$species,
                          maxAge = 1000,
-                         simEnv = envir(simOut))
-  expect_true(nrow(out$simOutputs) == max(simOut$species$longevity)+1)
+                         simEnv = envir(simOut),
+                         initialB = 10)
+  expect_true(nrow(out$simOutputs) == max(simOut$species$longevity))
   
   
 })

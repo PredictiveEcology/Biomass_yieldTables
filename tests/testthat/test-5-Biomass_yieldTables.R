@@ -82,8 +82,10 @@ test_that("module runs with small example", {
   
   expect_true(nrow(simTest$yieldTablesCumulative) > 0)
   expect_true(max(simTest$yieldTablesCumulative$age) == max(simTest$species$longevity))
-  expect_true(all(simTest$yieldTablesCumulative$biomass[simTest$yieldTablesCumulative$age == 0] == 1))
-  expect_true(all(simTest$yieldTablesCumulative$biomass >= 1))
+  ## every table: biomass 0 at age 0, initialB (default 10) at age 1, then growth
+  expect_true(all(simTest$yieldTablesCumulative$biomass[simTest$yieldTablesCumulative$age == 0] == 0))
+  expect_true(all(simTest$yieldTablesCumulative$biomass[simTest$yieldTablesCumulative$age == 1] == 10))
+  expect_true(all(simTest$yieldTablesCumulative$biomass[simTest$yieldTablesCumulative$age > 0] >= 1))
   expect_true(all(simTest$yieldTablesCumulative$age >= 0))
   expect_setequal(simTest$yieldTablesCumulative$yieldTableIndex, simTest$yieldTablesId$yieldTableIndex)
   ## what LandRCBM_split3pools / CBM_core and other consumers rely on (helper-yieldTableContract.R)

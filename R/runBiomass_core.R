@@ -1,21 +1,21 @@
 
 
-runBiomass_core <- function(moduleNameAndBranch, paths, cohortData, maxAge, species, simEnv) {
+runBiomass_core <- function(moduleNameAndBranch, paths, cohortData, maxAge, species, simEnv, initialB) {
   # get modules if using stand alone module
   if (!is.null(moduleNameAndBranch)) {
     getModule(moduleNameAndBranch, modulePath = paths$modulePath, overwrite = TRUE) # will only overwrite if wrong version
   }
   speciesNameConvention <- LandR::equivalentNameColumn(species$species, LandR::sppEquivalencies_CA)
-  # initialize all cohorts to age 0, biomass of 1, and simulation time to largest longevity
-  cohortDataForYield <- copy(cohortData)
-  cohortDataForYield$B <- 1L
-  cohortDataForYield$age <- 0L
+  # initialize all cohorts as Biomass_core starts new cohorts (age 1, biomass of initialB);
+  # the age-0 rows (biomass 0) are added after the simulation, by addAgeZeroRows()
+  cohortDataForYield <- initYieldCohorts(cohortData, initialB)
   
   
   endTime <- ifelse(is.na(maxAge), 
                     max(species$longevity), 
                     min(maxAge, max(species$longevity)))
-  timesForYield <- list(start = 0, end = endTime)
+  # cohorts are age 1 at time 0, so time endTime - 1 holds age endTime
+  timesForYield <- list(start = 0, end = endTime - 1)
   
   # The following line reduce the number of pixel groups. Pixels of the same 
   # ecoregion with the same species composition will produce the same Yield Tables. 
@@ -66,6 +66,7 @@ runBiomass_core <- function(moduleNameAndBranch, paths, cohortData, maxAge, spec
       , "calcSummaryBGM" = NULL
       , "seedingAlgorithm" = "noSeeding"
       , "minCohortBiomass" = 1
+      , "initialB" = initialB
     )
   )
   paths$outputPath <- file.path(paths$outputPath, "cohortDataYield")
@@ -81,6 +82,31 @@ runBiomass_core <- function(moduleNameAndBranch, paths, cohortData, maxAge, spec
   )
   
   list(simOutputs = simOutputs, digest = dig, yieldPixelGroupMap = objects$pixelGroupMap)
+}
+
+#' Start cohorts as Biomass_core starts new cohorts: age 1 and biomass `initialB`.
+#' @param cohortData a `cohortData` table.
+#' @param initialB numeric, the `initialB` parameter passed on to Biomass_core.
+#' @return a copy of `cohortData` with `B` and `age` reset.
+initYieldCohorts <- function(cohortData, initialB) {
+  cohortDataForYield <- copy(cohortData)
+  cohortDataForYield$B <- as.integer(round(initialB))
+  cohortDataForYield$age <- 1L
+  cohortDataForYield
+}
+
+#' Add an age-0 row with biomass 0 to every yield table.
+#'
+#' The simulated tables start at age 1 (biomass `initialB`). Consumers need an age-0 row:
+#' LandRCBM_split3pools takes increments from it, and CBM_core joins increments to age-0 cohorts.
+#' @param yieldTables a `data.table` with columns `yieldTableIndex`, `speciesCode`, `age`, `biomass`.
+#' @return `yieldTables` with one age-0 row (biomass 0) per table, keyed as before.
+addAgeZeroRows <- function(yieldTables) {
+  age0 <- yieldTables[, list(age = 0L, biomass = 0L), by = c("yieldTableIndex", "speciesCode")]
+  out <- rbindlist(list(age0, yieldTables), use.names = TRUE, fill = TRUE)
+  setorderv(out, c("speciesCode", "yieldTableIndex", "age"))
+  setkeyv(out, c("speciesCode", "yieldTableIndex"))
+  out
 }
 
 simInitAndSpadesClearEnv <- function(...) {

@@ -38,6 +38,11 @@ defineModule(sim, list(
     defineParameter("maxAge", "integer", NA, NA, NA,
                     "The number of years for which the yield tables are created. If not provided, ",
                     "the yield tables will be created to the largest species longevity."),
+    defineParameter("initialB", "numeric", 10, 1, NA,
+                    paste("Biomass (g/m2) of each table at age 1. Cohorts start as Biomass_core starts new",
+                          "cohorts (age 1, biomass `initialB`), and this is passed to Biomass_core as its",
+                          "`initialB`; the default matches Biomass_core's. Every table also has an age-0",
+                          "row with biomass 0.")),
     defineParameter("moduleNameAndBranch", "character", "PredictiveEcology/Biomass_core@development (>= 1.3.9)", NA, NA,
                     "The branch and version number required for Biomass_core. This will be downloaded ",
                     "into the 'submodules' folder of this module, so it does not ",
@@ -104,6 +109,7 @@ GenerateData <- function(sim) {
   biomassCoresOuts <-  Cache(runBiomass_core, moduleNameAndBranch = Par$moduleNameAndBranch,
                              paths = mod$paths, cohortData = sim$cohortData, maxAge = Par$maxAge,
                              species = sim$species, simEnv = envir(sim),
+                             initialB = Par$initialB,
                              omitArgs = "simEnv")
   mod$yieldOutputs <- biomassCoresOuts$simOutputs
   sim$yieldTablesId <- data.table(
@@ -138,10 +144,7 @@ GenerateYieldTables <- function(sim) {
   message("Simulation done! Loading in cohortData files")
   cohortDataAll <- Cache(ReadExperimentFiles, omitArgs = "factorialOutputs",
                          .cacheExtra = mod$digest$outputHash, as.data.table(mod$yieldOutputs)[saved == TRUE])
-  # Because LandR biomass will lump all age < 11 into age 0
-  if ((sum(cohortDataAll$age[cohortDataAll$yieldTableIndex == cohortDataAll$yieldTableIndex[1]] == 0) %% 11) == 0) {
-    cohortDataAll[age == 0, age := 0:10, by = c("yieldTableIndex", "speciesCode")]
-  }
+  cohortDataAll <- addAgeZeroRows(cohortDataAll)
   sim$yieldTablesCumulative <- cohortDataAll
   setcolorder(sim$yieldTablesCumulative, c("yieldTableIndex", "speciesCode", "age", "biomass"))
   rm(cohortDataAll)

@@ -1,4 +1,5 @@
 # Biomass_yieldTables (development version)
 
+* New parameter `initialB` (default 10, as in Biomass_core). Every yield table now has biomass 0 at age 0 and `initialB` at age 1, then grows as a Biomass_core cohort does; before, tables started from 1 g/m2 at age 0, which let rounding decide the winner in species mixes. The age-0 row stays, so LandRCBM_split3pools and CBM_core are unaffected, and the 0-10 age relabelling is gone.
 * Reverted the start of yield-table cohorts at age 1 and `initialB` (#24): tables again start at age 0 with B = 1, which LandRCBM_split3pools and CBM_core rely on (an age-0 row per table, increments from age 0). New tests state what consumers rely on: every table starts at age 0 with biomass <= 1 g/m2, and ages run 0, 1, 2, ... without gaps or repeats.
 * `reqdPkgs` now lists `crayon`, `digest`, `ggplot2`, `reproducible` and `SpaDES.project`, which the module's code uses.
