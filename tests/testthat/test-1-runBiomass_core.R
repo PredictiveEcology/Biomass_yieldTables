@@ -72,7 +72,8 @@ test_that("function runBiomass_core works", {
   
   # inspect output class
   expect_is(out, "list")
-  expect_named(out, c("simOutputs", "digest", "yieldPixelGroupMap"))
+  expect_named(out, c("simOutputs", "digest", "yieldPixelGroupMap", "yieldEcoregion", "headstart"))
+  expect_null(out$headstart) # off unless headstartYears > 0
   expect_is(out$simOutputs, "data.frame")
   expect_is(out$digest, "list")
   expect_is(out$yieldPixelGroupMap, "SpatRaster")

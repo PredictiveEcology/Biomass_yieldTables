@@ -1,6 +1,7 @@
 
 
-runBiomass_core <- function(moduleNameAndBranch, paths, cohortData, maxAge, species, simEnv, initialB) {
+runBiomass_core <- function(moduleNameAndBranch, paths, cohortData, maxAge, species, simEnv, initialB,
+                            headstartYears = 0L, headstartRegen = c("serotiny", "resprout")) {
   # get modules if using stand alone module
   if (!is.null(moduleNameAndBranch)) {
     getModule(moduleNameAndBranch, modulePath = paths$modulePath, overwrite = TRUE) # will only overwrite if wrong version
@@ -81,7 +82,79 @@ runBiomass_core <- function(moduleNameAndBranch, paths, cohortData, maxAge, spec
                       debug = 1, omitArgs = c("objects", "times", "debug"), .cacheExtra = dig
   )
   
-  list(simOutputs = simOutputs, digest = dig, yieldPixelGroupMap = objects$pixelGroupMap)
+  headstart <- NULL
+  if (!is.na(headstartYears) && headstartYears > 0) {
+    headstart <- runHeadstart(cohortData = cohortDataForYield, objects = objects, parameters = parameters,
+                              paths = paths, species = species, years = as.integer(headstartYears),
+                              regen = headstartRegen, endTime = timesForYield$end, dig = dig)
+  }
+
+  list(simOutputs = simOutputs, digest = dig, yieldPixelGroupMap = objects$pixelGroupMap,
+       yieldEcoregion = unique(cohortDataForYield[, .(yieldTableIndex = pixelGroup,
+                                                      ecoregionGroup = as.character(ecoregionGroup))]),
+       headstart = headstart)
+}
+
+## Yield tables in which the species that regenerate after fire from seed banks or resprouts
+## (`species$postfireregen` in `regen`) grow alone for `years` before the others are added (age 1, `initialB`,
+## as in the plain tables). Only pixelGroups with a head-start species and at least two species can differ from
+## the plain tables, so only those are run. Returns the outputs of both phases (phase 1: times 0 to `years`,
+## phase 2: `years` to `end`) and the pixelGroups that were run.
+headstartGroups <- function(cohortData, headstartSpecies) {
+  perGroup <- cohortData[, .(nSpecies = uniqueN(speciesCode),
+                             anyHeadstart = any(as.character(speciesCode) %in% headstartSpecies)),
+                         by = pixelGroup]
+  perGroup[nSpecies > 1L & anyHeadstart, pixelGroup]
+}
+
+runHeadstart <- function(cohortData, objects, parameters, paths, species, years, regen, endTime, dig) {
+  headstartSpecies <- species$species[species$postfireregen %in% regen]
+  isHeadstart <- as.character(cohortData$speciesCode) %in% headstartSpecies
+  groups <- headstartGroups(cohortData, headstartSpecies)
+  if (length(groups) == 0L) {
+    message("Headstart: no multi-species pixelGroup has a species that regenerates by ",
+            paste(regen, collapse = " or "), "; no headstart tables")
+    return(NULL)
+  }
+  if (years >= endTime) {
+    stop("headstartYears (", years, ") must be shorter than the simulated years (", endTime, ")")
+  }
+  message("Headstart: ", paste(headstartSpecies, collapse = ", "), " grow alone for ", years, " years in ",
+          length(groups), " of ", uniqueN(cohortData$pixelGroup), " pixelGroups")
+
+  ## pixelGroups that are not run are set to 0 (no vegetation) in the map
+  groupMap <- terra::deepcopy(objects$pixelGroupMap)
+  v <- terra::values(groupMap)[, 1]
+  v[!is.na(v) & !v %in% groups] <- 0L
+  terra::values(groupMap) <- v
+
+  runPhase <- function(label, cd, times, extraDigest) {
+    phaseObjects <- objects
+    phaseObjects$cohortData <- cd
+    phaseObjects$pixelGroupMap <- groupMap
+    phasePaths <- paths
+    # illustrative only: written to the session's tempdir (removed by `headstartTables`' caller), never cached
+    phasePaths$outputPath <- file.path(tempdir(), paste0("cohortDataYieldHeadstart", label))
+    phaseOutputs <- expand.grid(objectName = "cohortData", saveTime = seq(times$start, times$end, by = 1),
+                                eventPriority = 1, fun = "qs2::qs_save", stringsAsFactors = FALSE)
+    phaseParams <- parameters
+    phaseParams$Biomass_core$.plotInitialTime <- times$start
+    phaseDigest <- CacheDigest(list(dig, "headstart", label, times, headstartSpecies, extraDigest))
+    out <- simInitAndSpadesClearEnv(paths = phasePaths, times = times, params = phaseParams,
+                                    modules = "Biomass_core", outputs = phaseOutputs, objects = phaseObjects,
+                                    debug = 1)
+    list(simOutputs = out, digest = phaseDigest)
+  }
+
+  phase1 <- runPhase("1", cohortData[isHeadstart], list(start = 0, end = years), NULL)
+  handoffFile <- as.data.table(phase1$simOutputs)[saveTime == years & saved == TRUE, file]
+  headstartCohorts <- qs2::qs_read(handoffFile)
+  lateCohorts <- cohortData[pixelGroup %in% groups & !isHeadstart]
+  cohortsAtHandoff <- rbindlist(list(headstartCohorts, lateCohorts), use.names = TRUE, fill = TRUE)
+  phase2 <- runPhase("2", cohortsAtHandoff, list(start = years, end = endTime), cohortsAtHandoff)
+
+  list(phase1 = phase1$simOutputs, phase2 = phase2$simOutputs, years = years, groups = groups,
+       digest = list(phase1$digest, phase2$digest))
 }
 
 #' Start cohorts as Biomass_core starts new cohorts: age 1 and biomass `initialB`.

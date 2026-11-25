@@ -1,4 +1,4 @@
-ReadExperimentFiles <- function(factorialOutputs) {
+ReadExperimentFiles <- function(factorialOutputs, keepTime = FALSE) {
   factorialOutputs <- as.data.table(factorialOutputs)[objectName == "cohortData"]
   fEs <- .fileExtensions()
   cdsList <- by(factorialOutputs, factorialOutputs[, "saveTime"], function(x) {
@@ -7,6 +7,9 @@ ReadExperimentFiles <- function(factorialOutputs) {
     message(crayon::green("reading: "))
     cat(crayon::green(x$file, "..."))
     cd <- getFromNamespace(wh$fun, ns = asNamespace(wh$package))(x$file)[, .(speciesCode, age, B, pixelGroup)]
+    if (keepTime) {
+      cd[, year := x$saveTime[1]]
+    }
     cat(crayon::green(" Done!\n"))
     return(cd)
   })
