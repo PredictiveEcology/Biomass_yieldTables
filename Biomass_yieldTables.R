@@ -67,6 +67,10 @@ defineModule(sim, list(
                               "and may be ommited. However, this may result in downstream issues with",
                               "other modules. Must be supplied by the user or created in another module",
                               "like `Biomass_BiomassDataPrep`.")),
+    expectsInput("sppColorVect", "character",
+                 desc = paste("Optional. Named character vector of hex colours, one per species (names are `speciesCode`s),",
+                              "used to plot the yield curves. Created by `Biomass_borealDataPrep`; if absent, ggplot's",
+                              "default colours are used.")),
     expectsInput(
       objectName = "rasterToMatch", objectClass =  "SpatRaster",
       desc = "template raster to use for simulations; defaults to RIA study area")
@@ -156,7 +160,7 @@ PlotYieldTables <- function(sim) {
   fname = paste("Yield Curves from", Par$numPlots,
                 "random plots -", gsub(":", "_", sim$._startClockTime))
   Plots(data = sim$yieldTablesCumulative, usePlot = FALSE, fn = pltfn,
-        numPlots = Par$numPlots,
+        numPlots = Par$numPlots, colours = sim$sppColorVect,
         ggsaveArgs = list(width = 10, height = 7),
         filename = fname)
   mapRast <- rast(sim$rasterToMatch)

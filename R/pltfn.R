@@ -1,4 +1,4 @@
-pltfn <- function(AGB, numPlots) {
+pltfn <- function(AGB, numPlots, colours = NULL) {
   numGroups <- length(unique(AGB$yieldTableIndex))
   
   if (numPlots <= 0){
@@ -13,6 +13,9 @@ pltfn <- function(AGB, numPlots) {
   setnames(id2, "biomass", "AGB")
   gg <- ggplot(id2, aes(age, AGB, color = speciesCode)) + geom_line() + theme_bw() +
     facet_wrap(~yieldTableIndex)
+  if (length(colours)) {
+    gg <- gg + scale_color_manual(values = colours, breaks = intersect(names(colours), unique(id2$speciesCode)))
+  }
   return(invisible(gg))
 }
 

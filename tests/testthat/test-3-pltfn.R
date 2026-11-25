@@ -24,3 +24,9 @@ test_that("function pltfn works", {
   expect_equal(length(levels(ggplot2::ggplot_build(pltfn(AGB, 2))$data[[1]]$PANEL)), 2)
   expect_equal(length(levels(ggplot2::ggplot_build(pltfn(AGB, 10))$data[[1]]$PANEL)), ngroup)
 })
+
+test_that("pltfn uses the supplied species colours", {
+  AGB <- data.table::data.table(yieldTableIndex = 1L, age = 1:3, speciesCode = "Pice_eng", biomass = 1:3)
+  gg <- pltfn(AGB, 1, colours = c(Pice_eng = "#112233"))
+  expect_equal(unique(ggplot2::ggplot_build(gg)$data[[1]]$colour), "#112233")
+})
