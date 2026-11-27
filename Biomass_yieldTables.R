@@ -33,8 +33,19 @@ defineModule(sim, list(
     defineParameter(".plots", "character", "screen", NA, NA,
                     "Used by Plots function, which can be optionally used here"),
     defineParameter("numPlots", "integer", 40L, NA, NA,
-                    "Number of pixel groups that will be randomly selected and ",
-                    "for which yield curves will be plotted."),
+                    paste("Total number of yield tables for which curves will be plotted: the most",
+                          "prevalent (most pixels) ones within each of the most prevalent `ecoregionGroup`s.")),
+    defineParameter("numEcoregionGroups", "integer", 4L, 1L, NA,
+                    paste("Number of the most prevalent `ecoregionGroup`s (most pixels) whose yield curves are",
+                          "plotted. `numPlots` is split evenly among them.")),
+    defineParameter("headstartYears", "integer", 5L, 0L, NA,
+                    paste("If above 0 (set 0 to turn off), `yieldTablesCumulativeHeadstart` is also created: species whose",
+                          "`postfireregen` is in `headstartRegen` grow alone for this many years before the other species are",
+                          "added at age 1 with `initialB`. This represents a landscape after fire, where seed bank and",
+                          "resprouting species start first. Only `yieldTableIndex`es with at least one such species and at",
+                          "least two species differ from `yieldTablesCumulative`.")),
+    defineParameter("headstartRegen", "character", c("serotiny", "resprout"), NA, NA,
+                    "Values of `species$postfireregen` that get the head start (see `headstartYears`)."),
     defineParameter("maxAge", "integer", NA, NA, NA,
                     "The number of years for which the yield tables are created. If not provided, ",
                     "the yield tables will be created to the largest species longevity."),
@@ -83,7 +94,14 @@ defineModule(sim, list(
                         "on species combination. `biomass` is the biomass for the",
                         "given species at the pixel age.")),
     createsOutput(objectName = "yieldTablesId", objectClass = "data.table",
-                  "A data.table linking spatially the `yieldTableIndex`. Columns are `pixelIndex` and `yieldTableIndex`")
+                  "A data.table linking spatially the `yieldTableIndex`. Columns are `pixelIndex` and `yieldTableIndex`"),
+    createsOutput(objectName = "yieldTablesCumulativeHeadstart", objectClass = "data.table",
+                  paste("Only if `headstartYears` > 0. Same `yieldTableIndex`es (and `yieldTablesId`) as `yieldTablesCumulative`,",
+                        "but species with `postfireregen` in `headstartRegen` grow alone for `headstartYears` years. Here `age`",
+                        "is the age of the first cohorts (years since the disturbance + 1) for all species, so the other species",
+                        "have no rows before `headstartYears` + 1 and start there with `initialB`; it does not follow the age-0",
+                        "contract of `yieldTablesCumulative`. Tables without such a species are copied from",
+                        "`yieldTablesCumulative`."))
   )
 ))
 
@@ -113,9 +131,11 @@ GenerateData <- function(sim) {
   biomassCoresOuts <-  Cache(runBiomass_core, moduleNameAndBranch = Par$moduleNameAndBranch,
                              paths = mod$paths, cohortData = sim$cohortData, maxAge = Par$maxAge,
                              species = sim$species, simEnv = envir(sim),
-                             initialB = Par$initialB,
+                             initialB = Par$initialB, headstartYears = Par$headstartYears,
+                             headstartRegen = Par$headstartRegen,
                              omitArgs = "simEnv")
   mod$yieldOutputs <- biomassCoresOuts$simOutputs
+  mod$headstart <- biomassCoresOuts$headstart
   sim$yieldTablesId <- data.table(
     yieldTableIndex = as.integer(biomassCoresOuts$yieldPixelGroupMap[])
   )
@@ -141,6 +161,9 @@ GenerateData <- function(sim) {
   sim$yieldTablesId <- sim$yieldTablesId[, pixelIndex := .I] |> na.omit()
   setcolorder(sim$yieldTablesId, c("pixelIndex", "yieldTableIndex"))
   mod$digest <- biomassCoresOuts$digest
+  ## pixels per yield table and its ecoregionGroup, to plot the most prevalent ones
+  mod$prevalence <- merge(sim$yieldTablesId[, .(nPixels = .N), by = "yieldTableIndex"],
+                          biomassCoresOuts$yieldEcoregion, by = "yieldTableIndex")
   return(sim)
 }
 
@@ -152,17 +175,56 @@ GenerateYieldTables <- function(sim) {
   sim$yieldTablesCumulative <- cohortDataAll
   setcolorder(sim$yieldTablesCumulative, c("yieldTableIndex", "speciesCode", "age", "biomass"))
   rm(cohortDataAll)
+  if (!is.null(mod$headstart)) {
+    sim$yieldTablesCumulativeHeadstart <- headstartTables(mod$headstart, sim$yieldTablesCumulative)
+    unlink(c(mod$headstart$phase1$file, mod$headstart$phase2$file)) # the tables are in memory now
+  }
   gc()
   return(sim)
 }
 
+readHeadstartPhase <- function(outputs, digest) {
+  ReadExperimentFiles(as.data.table(outputs)[saved == TRUE], keepTime = TRUE)
+}
+
+## phase 1 (head-start species alone) up to the year the others join, then phase 2. As in the plain tables,
+## the cohorts are age 1 at time 0, so `age` is the time + 1
+headstartTables <- function(headstart, plainTables, read = readHeadstartPhase) {
+  phase1 <- read(headstart$phase1, headstart$digest[[1]]$outputHash)[year < headstart$years]
+  phase2 <- read(headstart$phase2, headstart$digest[[2]]$outputHash)[year >= headstart$years]
+  tables <- rbindlist(list(phase1, phase2), use.names = TRUE)
+  tables[, age := as.integer(year) + 1L]
+  tables[, year := NULL]
+  untouched <- plainTables[!yieldTableIndex %in% headstart$groups]
+  tables <- rbindlist(list(tables, untouched), use.names = TRUE)
+  setcolorder(tables, c("yieldTableIndex", "speciesCode", "age", "biomass"))
+  setkeyv(tables, c("yieldTableIndex", "speciesCode", "age"))
+  tables
+}
+
 PlotYieldTables <- function(sim) {
-  fname = paste("Yield Curves from", Par$numPlots,
-                "random plots -", gsub(":", "_", sim$._startClockTime))
+  colours <- sim$sppColorVect
+  fname = paste("Yield Curves from the most prevalent plots -", gsub(":", "_", sim$._startClockTime))
   Plots(data = sim$yieldTablesCumulative, usePlot = FALSE, fn = pltfn,
-        numPlots = Par$numPlots, colours = sim$sppColorVect,
+        numPlots = Par$numPlots, numEcoregionGroups = Par$numEcoregionGroups,
+        prevalence = mod$prevalence, colours = colours,
         ggsaveArgs = list(width = 10, height = 7),
         filename = fname)
+  if (!is.null(sim$yieldTablesCumulativeHeadstart)) {
+    # one page of 8 examples (each with its plain counterpart), spread over the top ecoregion groups
+    Plots(data = sim$yieldTablesCumulativeHeadstart, usePlot = FALSE, fn = pltfn,
+          numPlots = 8L, numEcoregionGroups = Par$numEcoregionGroups,
+          prevalence = mod$prevalence, plain = sim$yieldTablesCumulative,
+          onlyTables = mod$headstart$groups, colours = colours,
+          ggsaveArgs = list(width = 14, height = 9),
+          filename = paste0("Yield Curves with a head start of ", Par$headstartYears, " years - ",
+                            gsub(":", "_", sim$._startClockTime)))
+  }
+  compTables <- if (is.null(sim$yieldTablesCumulativeHeadstart)) sim$yieldTablesCumulative else sim$yieldTablesCumulativeHeadstart
+  Plots(data = compTables, usePlot = FALSE, fn = pltfnCompetition,
+        prevalence = mod$prevalence, n = 12L, colours = colours,
+        ggsaveArgs = list(width = 14, height = 9),
+        filename = paste("Species growing with competition -", gsub(":", "_", sim$._startClockTime)))
   mapRast <- rast(sim$rasterToMatch)
   mapRast[sim$yieldTablesId$pixelIndex] <- sim$yieldTablesId$yieldTableIndex
   Plots(mapRast, usePlot = TRUE, deviceArgs = list(width = 700, height = 500),
